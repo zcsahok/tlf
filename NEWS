@@ -1,3 +1,28 @@
+tlf-1.2.3_use_keypad
+====================
+This is an experimental test release.
+
+Until now tlf had hard coded logic for recognition of special keys (function
+keys, left/right and similar). Most of the key did only work on some
+terminals (xterm, rxvt, linux, ..) and not every key combination did work 
+on every terminal.
+
+Lately Nate N0NB did quite a lot of work to convert the key input handling 
+to use ncurses integrated logic to determine the right key from the terminfo
+database. That should now work on all terminals with a proper terminfo
+setting. 
+
+One point not completely supported by ncurses are key combinations like 
+Ctrl-PgUp/PgDown or the same with an Alt-prefix. We added some code to handle 
+it as smoothly as possible. 
+
+Before bringing these code to the TLF master branch we would like to get 
+some feedback about possible problems with our solution. Please do an 
+extensive testing and report all problems and differences related to the 
+keyboard handling.
+
+
+
 tlf-1.2.3
 =========
 Maintenance and bugfix release.

@@ -8,6 +8,10 @@
 
 extern prefix_data dummy_pfx;
 
+// expose private function
+void prefix_add(char *pfxstr);
+
+
 int setup_default(void **state) {
     dxcc_init();
     prefix_init();

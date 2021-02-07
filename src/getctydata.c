@@ -62,37 +62,56 @@ int find_full_match(const char *call) {
 }
 
 
-/* search for the best mach of 'call' in pfx table */
-int find_best_match(const char *call) {
+/* look for 'call' in prefix hash based on 'key' */
+static int search_prefix(const char *call, int key) {
     int bestlen = 0;
-    int i, w;
-    prefix_data *pfx;
-    int pfxmax = prefix_count();
+    int w = -1;
 
-    w = -1;
-    for (i = 0; i < pfxmax; i++) {
-	int l;
-	pfx = prefix_by_index(i);
+    int pfxmax = prefix_count_by_key(key);
+
+    for (int i = 0; i < pfxmax; i++) {
+	int idx = prefix_by_key(key, i);
+	prefix_data *pfx = prefix_by_index(idx);
+
 	if (pfx->exact) {
 	    if (strcmp(call, pfx->pfx) == 0) {
-		w = i;
-		break;
+		return idx;     // found an exact match
 	    }
 	    continue;
 	}
-	if (*pfx->pfx != call[0])
+
+	if (pfx->pfx_len <= bestlen)
 	    continue;
 
-	l = strlen(pfx->pfx);
-	if (l <= bestlen)
-	    continue;
-
-	if (strncmp(pfx->pfx, call, l) == 0) {
-	    bestlen = l;
-	    w = i;
+	if (strncmp(pfx->pfx, call, pfx->pfx_len) == 0) {
+	    bestlen = pfx->pfx_len;
+	    w = idx;
 	}
     }
+
     return w;
+}
+
+/* search for the best match of 'call' in pfx table */
+int find_best_match(const char *call) {
+    if (strlen(call) == 0) {
+	return -1;
+    }
+
+    // first try the default 2-char prefix
+    int key2 = prefix_hash_key(call);
+    int w = search_prefix(call, key2);
+    if (w >= 0) {
+	return w;   // got a match
+    }
+
+    // no match: try 1-char prefix (if different)
+    char prefix[2] = {call[0], 0};
+    int key1 = prefix_hash_key(prefix);
+    if (key1 == key2) {
+	return -1;  // don't search again with the same key
+    }
+    return search_prefix(call, key1);
 }
 
 /* replace callsign area (K2ND/4 -> K4ND)

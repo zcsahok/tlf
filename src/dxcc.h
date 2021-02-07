@@ -25,6 +25,7 @@
 
 typedef struct {
     char *pfx;
+    int pfx_len;
     unsigned short cq;
     unsigned short itu;
     short dxcc_index;
@@ -56,7 +57,11 @@ unsigned int prefix_count(void);
 
 prefix_data *prefix_by_index(unsigned int index);
 
-void prefix_add(char *pfxstr);
+int prefix_hash_key(const char *call);
+
+int prefix_count_by_key(int key);
+
+unsigned int prefix_by_key(int key, unsigned int offset);
 
 void dxcc_init(void);
 

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <glib.h>
 #include <math.h>
@@ -30,11 +31,13 @@
 
 GPtrArray *dxcc;
 GPtrArray *prefix;
+static GArray *prefix_hash[36 * 36];    // 2 base36 digits
 bool have_exact_matches;
 char cty_dat_version[12];   // VERyyyymmdd
 
 prefix_data dummy_pfx = {
     "No Prefix",
+    0,
     0,
     0,
     0,
@@ -45,13 +48,19 @@ prefix_data dummy_pfx = {
     false
 };
 
-
 void prefix_free(gpointer data) {
     prefix_data *pfx_data = data;
 
     g_free(pfx_data -> pfx);
     g_free(pfx_data -> continent);
     g_free(pfx_data);
+
+    for (int i = 0; i < G_N_ELEMENTS(prefix_hash); ++i) {
+	if (prefix_hash[i] != NULL) {
+	    g_array_free(prefix_hash[i], TRUE);
+	    prefix_hash[i] = NULL;
+	}
+    }
 }
 
 
@@ -60,6 +69,12 @@ void prefix_init(void) {
 	g_ptr_array_free(prefix, TRUE);
     }
     prefix = g_ptr_array_new_with_free_func(prefix_free);
+
+    for (int i = 0; i < G_N_ELEMENTS(prefix_hash); ++i) {
+	prefix_hash[i] = NULL;
+    }
+
+    have_exact_matches = false;
 }
 
 /* return number of entries in prefix array */
@@ -73,6 +88,51 @@ prefix_data *prefix_by_index(unsigned int index) {
 	return &dummy_pfx;
 
     return (prefix_data *)g_ptr_array_index(prefix, index);
+}
+
+/* convert char to base36 */
+int to_base36(char c) {
+    if (isdigit(c)) {
+	return c - '0';
+    }
+    if (isupper(c)) {
+	return 10 + c - 'A';
+    }
+    return 0;   // rest is mapped to zero
+}
+
+/* get hash key for a call/prefix */
+int prefix_hash_key(const char *call) {
+    if (call[0] == 0) { // normally call is never empty
+	return 0;
+    }
+    return to_base36(call[0]) + 36 * to_base36(call[1]);
+}
+
+/* get count of indices for hash key */
+int prefix_count_by_key(int key) {
+    if (prefix_hash[key] == NULL) {
+	return 0;
+    }
+    return prefix_hash[key]->len;
+}
+
+/* get prefix index from hash by key+offset */
+unsigned int prefix_by_key(int key, unsigned int offset) {
+    if (prefix_hash[key] == NULL || offset >= prefix_hash[key]->len) {
+	return 0;
+    }
+    int *indices = (int *)prefix_hash[key]->data;
+    return indices[offset];
+}
+
+/* add index to the prefix hash */
+static void prefix_hash_add(char *pfx, int index) {
+    int key = prefix_hash_key(pfx);
+    if (prefix_hash[key] == NULL) {
+	prefix_hash[key] = g_array_new(FALSE, FALSE, sizeof(int));
+    }
+    g_array_append_val(prefix_hash[key], index);
 }
 
 /* add a new prefix description */
@@ -138,9 +198,11 @@ void prefix_add(char *pfxstr) {
 	new_prefix -> cq = last_dx -> cq;
 
     new_prefix -> pfx = g_strdup(pfxstr);
+    new_prefix -> pfx_len = strlen(pfxstr);
     new_prefix -> dxcc_index = last_index;
 
     g_ptr_array_add(prefix, new_prefix);
+    prefix_hash_add(pfxstr, prefix_count() - 1);
 }
 
 

@@ -13,9 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: show OS info
+      run: cat /etc/os-release
     - name: install dependencies
       run: |
-        cat /etc/os-release
         sudo apt-get -qq update
         sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev libcmocka-dev     
     - name: autoreconf and basic make

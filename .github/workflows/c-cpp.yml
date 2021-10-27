@@ -1,4 +1,4 @@
-name: C/C++ CI build
+name: CI build
 
 on:
   push:
@@ -17,13 +17,9 @@ jobs:
       run: |
         sudo apt-get -qq update
         sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev libcmocka-dev     
-    - name: autoreconf
-      run: autoreconf -i
-    - name: configure
-      run: ./configure
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+    - name: autoreconf and basic make
+      run: autoreconf -i && ./configure && make
+    - name: configure with xmlrpc
+      run: make clean && ./configure --enable-fldigi-xmlrpc && make
+    - name: run tests
+      run: make check; rc=$?; cat test/run_*.log; exit $rc

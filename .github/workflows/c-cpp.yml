@@ -15,11 +15,12 @@ jobs:
     - uses: actions/checkout@v2
     - name: install dependencies
       run: |
+        cat /etc/os-release
         sudo apt-get -qq update
         sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev libcmocka-dev     
     - name: autoreconf and basic make
-      run: autoreconf -i && ./configure && make
+      run: autoreconf -i && ./configure && make -j2
     - name: configure with xmlrpc
-      run: make clean && ./configure --enable-fldigi-xmlrpc && make
+      run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
     - name: run tests
       run: make check; rc=$?; cat test/run_*.log; exit $rc

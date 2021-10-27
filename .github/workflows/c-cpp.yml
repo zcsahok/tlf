@@ -16,7 +16,7 @@ jobs:
     - name: install dependencies
       run: |
         sudo apt-get -qq update
-        sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev        
+        sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev libcmocka-dev     
     - name: autoreconf
       run: autoreconf -i
     - name: configure

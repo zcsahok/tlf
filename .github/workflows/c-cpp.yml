@@ -29,4 +29,4 @@ jobs:
     - name: run tests
       run: TERM=xterm make check; rc=$?; cat test/run_*.log; exit $rc
     - name: Color
-      run: echo TERM is; tput bold; echo $TERM; tput sgr0
+      run: echo TERM is; tput bold; tput setaf 1;echo $TERM; tput sgr0

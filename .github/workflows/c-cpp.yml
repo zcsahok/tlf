@@ -13,6 +13,7 @@ jobs:
     timeout-minutes: 3
     env:
       TERM: xterm
+      AM_COLOR_TESTS: always
 
     steps:
     - uses: actions/checkout@v2
@@ -27,6 +28,6 @@ jobs:
     - name: configure with xmlrpc
       run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
     - name: run tests
-      run: TERM=xterm make check; rc=$?; cat test/run_*.log; exit $rc
+      run: echo $TERM; echo $AM_COLOR_TESTS; make check; rc=$?; cat test/run_*.log; exit $rc
     - name: Color
       run: echo TERM is; tput bold; tput setaf 1;echo $TERM; tput sgr0

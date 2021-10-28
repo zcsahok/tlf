@@ -26,3 +26,5 @@ jobs:
       run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
     - name: run tests
       run: TERM=xterm make check; rc=$?; cat test/run_*.log; exit $rc
+    - name: Color
+      run: echo TERM is; tput bold; echo $TERM; tput sgr0

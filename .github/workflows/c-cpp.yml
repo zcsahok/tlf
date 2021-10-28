@@ -25,4 +25,4 @@ jobs:
     - name: configure with xmlrpc
       run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
     - name: run tests
-      run: make check; rc=$?; cat test/run_*.log; exit $rc
+      run: TERM=xterm make check; rc=$?; cat test/run_*.log; exit $rc

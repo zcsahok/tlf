@@ -17,17 +17,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: show OS info
+    - name: Show OS info
       run: cat /etc/os-release
-    - name: install dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get -qq update
         sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev libcmocka-dev     
-    - name: autoreconf and basic make
+    - name: Autoreconf and basic make
       run: autoreconf -i && ./configure && make -j2
-    - name: configure with xmlrpc
+    - name: Configure with xmlrpc
       run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
-    - name: run tests
+    - name: Run tests
       run: echo $TERM; echo $AM_COLOR_TESTS; make check; rc=$?; cat test/run_*.log; exit $rc
     - name: Color
       run: echo TERM is; tput bold; tput setaf 1;echo $TERM; tput sgr0

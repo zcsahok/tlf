@@ -44,7 +44,6 @@
 
 
 #define BUFSIZE   81
-char buffer[BUFSIZE];
 
 /** shorten CW numbers */
 char short_number(char c) {
@@ -165,7 +164,7 @@ void replace_all(char *buf, int size, const char *what, const char *rep) {
     replace_n(buf, size, what, rep, 999);
 }
 
-void ExpandMacro(void) {
+void expand_macros(char *buffer) {
 
     int i;
     static char qsonroutput[5] = "";
@@ -231,65 +230,71 @@ void ExpandMacro(void) {
 	replace_all(buffer, BUFSIZE, "|", "");	    /* drop it */
 }
 
-
-void sendbuf(void) {
-
-    if ((trxmode == CWMODE && cwkeyer != NO_KEYER) ||
-	    (trxmode == DIGIMODE && digikeyer != NO_KEYER)) {
-
-	ExpandMacro();
-
-	if (!simulator) {
-	    if (sending_call == 0)
-		add_to_keyer_terminal(buffer);
-	}
-
-	if (trxmode == DIGIMODE) {
-
-	    if (digikeyer == MFJ1278_KEYER) {
-		int i = 0;
-		for (i = 0; i < strlen(buffer); i++)
-		    if (buffer[i] == '\n')
-			buffer[i] = RETURN;
-		for (i = 0; i < strlen(buffer); i++)
-		    if (buffer[i] == 123)
-			buffer[i] = 20;	/* ctrl-t */
-		for (i = 0; i < strlen(buffer); i++)
-		    if (buffer[i] == 125)
-			buffer[i] = CTRL_R;	/* ctrl-r */
-	    }
-	    keyer_append(buffer);
-	}
-	if (trxmode == CWMODE) {
-
-	    if (cwkeyer == MFJ1278_KEYER) {
-		int i = 0;
-		for (i = 0; i < strlen(buffer); i++)
-		    if (buffer[i] == '\n')
-			buffer[i] = RETURN;
-	    }
-	    keyer_append(buffer);
-	}
-
-	if (simulator) {
-	    set_simulator_state(REPEAT);
-	}
-
-	buffer[0] = '\0';
-    }
-}
-
-
 /** \brief send message
  *
- * Send the message via CW or DIGI mode, but only if not empty
+ * Send a message via the configured keyer.
+ * Empty messages are ignored.
+ *
  * \param msg message to send
  */
 void sendmessage(const char *msg) {
-    if (strlen(msg) != 0) {
-	g_strlcpy(buffer, msg, sizeof(buffer));
-	sendbuf();
+
+    if (strlen(msg) == 0) {
+        return;     // message is empty
     }
+
+    if ((trxmode == CWMODE && cwkeyer == NO_KEYER) ||
+	    (trxmode == DIGIMODE && digikeyer == NO_KEYER)) {
+        return;     // no keyer specified
+    }
+
+    char buffer[BUFSIZE];
+    g_strlcpy(buffer, msg, sizeof(buffer));
+    expand_macros(buffer);
+
+    if (!simulator && trxmode != SSBMODE) { // no keyer terminal output for SSB
+        if (sending_call == 0)
+            add_to_keyer_terminal(buffer);
+    }
+
+    if (trxmode == DIGIMODE) {
+
+        if (digikeyer == MFJ1278_KEYER) {
+            int i = 0;
+            for (i = 0; i < strlen(buffer); i++)
+                if (buffer[i] == '\n')
+                    buffer[i] = RETURN;
+            for (i = 0; i < strlen(buffer); i++)
+                if (buffer[i] == 123)
+                    buffer[i] = 20;	/* ctrl-t */
+            for (i = 0; i < strlen(buffer); i++)
+                if (buffer[i] == 125)
+                    buffer[i] = CTRL_R;	/* ctrl-r */
+        }
+        keyer_append(buffer);
+    }
+    else if (trxmode == CWMODE) {
+
+        if (cwkeyer == MFJ1278_KEYER) {
+            int i = 0;
+            for (i = 0; i < strlen(buffer); i++)
+                if (buffer[i] == '\n')
+                    buffer[i] = RETURN;
+        }
+        keyer_append(buffer);
+    }
+    else if (trxmode == SSBMODE) {
+        for (int i = 0; i < strlen(buffer); i++) {
+            if (buffer[i] < ' ')
+                buffer[i] = ' ';    // replace control characters with space
+        }
+        play_file(buffer);
+    }
+
+    if (simulator) {
+        set_simulator_state(REPEAT);
+    }
+
 }
 
 void send_standard_message(int msg) {
@@ -301,13 +306,13 @@ void send_standard_message(int msg) {
 	    sendmessage(digi_message[msg]);
 	    break;
 	default:
-	    if (msg < 14)
-		play_file(ph_message[msg]);
+	    if (msg <= CQ_TU_MSG)
+		sendmessage(ph_message[msg]);
 	    break;
     }
 }
 
-void send_keyer_message(int msg) {
+void send_keyer_message(int msg) {  // FIXME use send_standard_message instead
     switch (trxmode) {
 	case DIGIMODE:
 	    sendmessage(digi_message[msg]);

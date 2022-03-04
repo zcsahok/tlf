@@ -140,8 +140,10 @@ enum {
 
 /* special message numbers */
 enum {
+    // F1..F12
     SP_TU_MSG = 12,
     CQ_TU_MSG = 13,
+    // ALT_0..ALT_9
     SP_CALL_MSG = 24
 };
 

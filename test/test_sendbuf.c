@@ -23,7 +23,7 @@ bool simulator = false;
 char test_msg[1024];
 
 /* export internal function for test */
-void ExpandMacro();
+void expand_macros(char *buffer);
 char *PrepareSPcall();
 void replace_all(char *buf, int size, const char *what,
 		 const char *rep);
@@ -73,8 +73,9 @@ void check_replace_all(char *input, const char *what, char *rep,
 }
 
 void check_ExpandMacro(const char *input, const char *exp) {
+    char buffer[100];
     strcpy(buffer, input);
-    ExpandMacro();
+    expand_macros(buffer);
     assert_string_equal(buffer, exp);
 }
 

@@ -286,7 +286,6 @@ void record(void) {
     }
 }
 
-
 /* playing recorded voice keyer messages */
 void *play_thread(void *ptr) {
     char *audiofile = (char *)ptr;
@@ -298,9 +297,10 @@ void *play_thread(void *ptr) {
     // use play_vk from current dir, if available
     // note: this overrides PATH setting
     bool has_local_play_vk = (access("./play_vk", X_OK) == 0);
-    char *playcommand = g_strdup_printf("%s %s",
+    char *playcommand = g_strdup_printf("%s \"%s\"",
 			(has_local_play_vk ? "./play_vk" : "play_vk"),
 				audiofile);
+    g_free(ptr);
 
     /* CAT PTT wanted and available, use it. */
     if (rigptt == CAT_PTT_USE) {
@@ -338,13 +338,13 @@ void play_file(char *audiofile) {
 	return;
     }
 
-    if (access(audiofile, R_OK) != 0) {
-	TLF_LOG_INFO("cannot open sound file %s!", audiofile);
-	return;
-    }
-
+//    if (access(audiofile, R_OK) != 0) {
+//	TLF_LOG_INFO("cannot open sound file %s!", audiofile);
+//	return;
+//    }
+    char *ptr = g_strdup(audiofile);    // will be free'd in play_thread
     /* play sound in separate thread so it can be killed from the main one */
-    if (pthread_create(&vk_thread, NULL, play_thread, (void *)audiofile) != 0) {
+    if (pthread_create(&vk_thread, NULL, play_thread, (void *)ptr) != 0) {
 	    TLF_LOG_INFO("could not start sound thread!");
     }
 }

@@ -307,5 +307,8 @@ enum {
 
 #define QSOS(n)    (((struct qso_t*)g_ptr_array_index(qso_array, n))->logline)
 
+//#define TLOG(s) {do {FILE *f=fopen("/tmp/t.log","a");char *p=s;fputs(p,f);fclose(f);g_free(p);} while(0);}
+#define TLOG(s) {}
+
 #endif /* TLF_H */
 

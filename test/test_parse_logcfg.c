@@ -33,7 +33,6 @@
 // OBJECT ../src/qrb.o
 // OBJECT ../src/setcontest.o
 // OBJECT ../src/cabrillo_utils.o
-// OBJECT ../src/log_utils.o
 
 // lancode.c
 int nodes = 0;

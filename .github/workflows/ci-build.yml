@@ -2,7 +2,7 @@ name: CI build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, test_plugin_ci ]
   pull_request:
     branches: [ master ]
 

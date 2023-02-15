@@ -6,7 +6,7 @@
 
 
 void test_ok_08(void **state) {
-    assert_int_equal(zone_nr("08"), 811);
+    assert_int_equal(zone_nr("08"), 8);
 }
 
 void test_ok__8(void **state) {

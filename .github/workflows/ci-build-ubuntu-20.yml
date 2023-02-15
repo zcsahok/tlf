@@ -33,4 +33,4 @@ jobs:
       run: make check
     - name: Tests failed
       if: ${{ steps.run_tests.outcome == 'failure' }}
-      run: cat test/run_*.log && exit 1
+      run: cat test/run_*.log && xxd test/rules/cqww/script.log && exit 1

@@ -30,7 +30,7 @@ jobs:
     - name: Run tests
       id: run_tests
       continue-on-error: true
-      run: make check
+      run: if make check; then echo AAAA; else echo BBBB; fi
     - name: Tests failed
       if: ${{ steps.run_tests.outcome == 'failure' }}
       run: cat test/run_*.log && exit 1

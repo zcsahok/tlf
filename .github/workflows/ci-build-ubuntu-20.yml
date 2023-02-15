@@ -26,7 +26,9 @@ jobs:
     - name: Set up datadir
       run: mkdir datadir && ln -s share datadir/tlf
     - name: Autoreconf and basic make
-      run: autoreconf -i && ./configure --datadir=$PWD && make -j2
+      run: |
+        autoreconf -i && ./configure --datadir=$PWD && make -j2
+        rm src/utils.o && make V=1
     - name: Configure with xmlrpc
       run: make clean && ./configure --datadir=$PWD --enable-fldigi-xmlrpc && make -j2
     - name: Run tests

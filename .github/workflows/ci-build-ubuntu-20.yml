@@ -28,7 +28,9 @@ jobs:
     - name: Configure with xmlrpc
       run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
     - name: Run tests
+      id: run_tests
       continue-on-error: true
-      run: |
-        make check
-        cat test/run_*.log
+      run: make check
+    - name: Tests failed
+      if: ${{ steps.run_tests.outcome == 'failure' }}
+      run: cat test/run_*.log && exit 1

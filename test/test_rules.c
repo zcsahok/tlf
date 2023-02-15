@@ -41,7 +41,7 @@ static void check_rules(const gchar *dirname, gchar *path) {
 #define TEST_RULES_DIR  TOP_SRCDIR "/test/rules"
 
 void test_rules(void **state) {
-#if 0
+#if 1
     GError *error;
     const gchar *dirname;
 

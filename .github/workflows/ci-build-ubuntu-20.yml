@@ -23,10 +23,12 @@ jobs:
       run: |
         sudo apt-get -qq update
         sudo apt-get install -y libhamlib-dev libxmlrpc-core-c3-dev libcmocka-dev     
+    - name: Set up datadir
+      run: mkdir datadir && ln -s share datadir/tlf
     - name: Autoreconf and basic make
-      run: autoreconf -i && ./configure && make -j2
+      run: autoreconf -i && ./configure --datadir=$PWD && make -j2
     - name: Configure with xmlrpc
-      run: make clean && ./configure --enable-fldigi-xmlrpc && make -j2
+      run: make clean && ./configure --datadir=$PWD --enable-fldigi-xmlrpc && make -j2
     - name: Run tests
       id: run_tests
       continue-on-error: true

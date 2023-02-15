@@ -35,6 +35,6 @@ jobs:
       id: run_tests
       continue-on-error: true
       run: make check
-    - name: Tests failed
+    - name: Show test results on failure
       if: ${{ steps.run_tests.outcome == 'failure' }}
       run: cat test/run_*.log && xxd test/rules/cqww/run.log && exit 1

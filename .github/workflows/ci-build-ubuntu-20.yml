@@ -37,6 +37,8 @@ jobs:
     - name: Show test results on failure
       if: ${{ steps.run_tests.outcome == 'failure' }}
       run: |
-        for f in test/run_*.log; do grep -q FAILED $f && cat $f; done
+        for f in test/run_*.log; do
+            grep -q FAILED $f && echo -e "\n$f:\n" && cat $f;
+        done
         xxd test/rules/cqww/run.log
         exit 1

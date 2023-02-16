@@ -43,13 +43,11 @@ bool check_qra(char *qra) {
  */
 char *find_available(char *filename) {
     char *path;
-printf("filename=%s\n", filename);
     if (g_access(filename, R_OK) == 0) {
 	path = g_strdup(filename);
     } else {
 	path = g_strconcat(PACKAGE_DATA_DIR, G_DIR_SEPARATOR_S,
 			   filename, NULL);
-printf("path=%s\n", path);
 	if (g_access(path, R_OK) != 0) {
 	    g_free(path);
 	    path = g_strdup("");

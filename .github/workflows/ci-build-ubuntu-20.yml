@@ -28,7 +28,6 @@ jobs:
     - name: Autoreconf and basic make
       run: |
         autoreconf -i && ./configure --datadir=$PWD/datadir && make -j2
-        rm src/utils.o && make V=1
     - name: Configure with xmlrpc
       run: make clean && ./configure --datadir=$PWD/datadir --enable-fldigi-xmlrpc && make -j2
     - name: Run tests
@@ -37,4 +36,7 @@ jobs:
       run: make check
     - name: Show test results on failure
       if: ${{ steps.run_tests.outcome == 'failure' }}
-      run: cat test/run_*.log && xxd test/rules/cqww/run.log && exit 1
+      run: |
+        for f in test/run_*.log; do grep -q FAILED $f && cat $f; done
+        xxd test/rules/cqww/run.log
+        exit 1

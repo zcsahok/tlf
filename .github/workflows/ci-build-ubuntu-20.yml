@@ -34,11 +34,11 @@ jobs:
       id: run_tests
       continue-on-error: true
       run: make check
-    - name: Show test results on failure
+    - name: Show failed test results
       if: ${{ steps.run_tests.outcome == 'failure' }}
       run: |
         for f in test/run_*.log; do
-            grep -q FAILED $f && echo -e "\n$f:\n" && cat $f;
+            grep -q FAILED $f && echo -e "\n$(tput smso)$f$(tput sgr0):\n" && cat $f;
         done
         xxd test/rules/cqww/run.log
         exit 1

@@ -16,10 +16,8 @@ p.logfile = fout
 i = p.expect(["continue", "save it", pexpect.TIMEOUT], timeout=2);
 if i == 0:
     rc = 0
-    print("OK")
 elif i == 1:
     rc = 1
-    print("FAIL")
     p.send('N') # do not save log
     p.expect("continue", timeout=2);
 else:

@@ -2,7 +2,7 @@ name: CI build for Ubuntu 20
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, poc_test_rules ]
   pull_request:
     branches: [ master ]
 

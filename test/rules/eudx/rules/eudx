@@ -8,7 +8,7 @@ CONTEST_MODE
 LOGFILE=eudx.log
 
 CABRILLO=UNIVERSAL
-CABRILLO-CONTEST=EU-DX
+CABRILLO-CONTEST=EUDXC
 
 #================================
 # Select one of following blocks:

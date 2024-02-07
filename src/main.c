@@ -960,7 +960,7 @@ static void mark_GPL_seen() {
  */
 static void tlf_cleanup() {
     if (pthread_self() != background_thread) {
-	pthread_cancel(background_thread);
+	terminate_background_process();
 	pthread_join(background_thread, NULL);
     }
 

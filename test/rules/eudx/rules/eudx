@@ -19,6 +19,7 @@ CABRILLO-CONTEST=EUDXC
 #CABRILLO-EXCHANGE=00
 #F3=@ ++5NN-- 00
 #S&P_TU_MSG=TU ++5NN-- 00
+#PLUGIN_CONFIG=DX
 #--------------------------------
 #
 # EU stations send region code
@@ -26,16 +27,14 @@ CABRILLO-CONTEST=EUDXC
 CABRILLO-EXCHANGE=XX00
 F3=@ ++5NN-- XX00
 S&P_TU_MSG=TU ++5NN-- XX00
+PLUGIN_CONFIG=IT
 #================================
 
-# Scoring:
-COUNTRYLIST=OE,ON,LZ,9A,5B,OK,OZ,ES,OH,F,DL,SV,HA,EI,I,YL,LY,LX,9H,PA,SP,CT,YO,OM,S5,EA,SM
-COUNTRY_LIST_POINTS=10
-MY_COUNTRY_POINTS=2
-MY_CONTINENT_POINTS=3
-DX_POINTS=5
-
 MIXED
+
+# Scoring:
+# (handled by eudx.py)
+
 
 # Multipliers:
 # EU regions and DXCC countries per band

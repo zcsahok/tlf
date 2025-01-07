@@ -768,8 +768,6 @@ static int multiplier_info_eval_callback(const GMatchInfo *match, GString *res,
 }
 
 static void show_multiplier_info_templated(char **mults) {
-    mvaddstr(0, 30, "TTT MULTIPLIERS");
-
     // look for values in curly braces
     GRegex *regex = g_regex_new("{([^}]+)}", G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT,
 				NULL);
@@ -807,8 +805,6 @@ static void show_multiplier_info_templated(char **mults) {
 }
 
 static void show_multiplier_info_simple(char **mults) {
-    mvaddstr(0, 30, "MULTIPLIERS");
-
     int vert = 2;
     int hor = 2;
     for (int i = 0; mults[i]; ++i) {
@@ -931,6 +927,8 @@ void multiplierinfo(void) {
     } else if (plugin_has_get_multiplier_info()) {
 
 	char **mults = plugin_get_multiplier_info();
+
+	mvaddstr(0, 30, "MULTIPLIERS");
 
 	bool is_template = false;
 	for (int i = 0; mults[i]; ++i) {

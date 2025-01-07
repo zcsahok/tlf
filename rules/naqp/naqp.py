@@ -30,3 +30,16 @@ def check_exchange(qso):
     else:
         mult = ''
     return {'mult1_value': mult}
+
+def get_multiplier_info():
+    mults = countries
+    # separate US and Canada by line breaks
+    mults.insert(mults.index('DC')+1, '|')
+    mults.insert(mults.index('DC')+2, '|')
+    mults.insert(mults.index('YT')+1, '|')
+    mults.insert(mults.index('YT')+2, '|')
+    # pad other countries to 5 chars
+    for i in range(mults.index('YT')+3, len(mults)):
+        mults[i] = mults[i].rjust(5)
+
+    return mults

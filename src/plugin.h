@@ -15,4 +15,7 @@ int plugin_score(struct qso_t *qso);
 bool plugin_has_check_exchange();
 void plugin_check_exchange(struct qso_t *qso);
 
+bool plugin_has_get_multiplier_info();
+char **plugin_get_multiplier_info();
+
 #endif

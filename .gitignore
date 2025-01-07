@@ -35,6 +35,7 @@ test-driver
 # temporary internal files
 .bmdata.dat
 .paras
+**/__pycache__
 
 # backed-up log file
 20*_*_*.log

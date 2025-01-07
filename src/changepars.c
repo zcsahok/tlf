@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include "audio.h"
+#include "bands.h"
 #include "cqww_simulator.h"
 #include "changepars.h"
 #include "clear_display.h"
@@ -49,6 +50,7 @@
 #include "muf.h"
 #include "netkeyer.h"
 #include "parse_logcfg.h"
+#include "plugin.h"
 #include "qtcvars.h"		// Includes globalvars.h
 #include "readcalls.h"
 #include "readqtccalls.h"
@@ -711,6 +713,133 @@ void networkinfo(void) {
 
 /* -------------------------------------------------------------- */
 
+static int get_multiplier_bands(char *mult) {
+    for (int k = 0; k < nr_multis; k++) {
+	if (strcmp(multis[k].name, mult) == 0) {
+	    return multis[k].band;
+	}
+    }
+
+    return 0;
+}
+
+static char get_worked_flag(int worked_at, int band_mask) {
+    return (worked_at & band_mask) ? '*' : '-';
+}
+
+static char *build_multiplier_band_info(int worked_at) {
+    return g_strdup_printf("%c%c%c%c%c%c",
+			   get_worked_flag(worked_at, BAND160),
+			   get_worked_flag(worked_at, BAND80),
+			   get_worked_flag(worked_at, BAND40),
+			   get_worked_flag(worked_at, BAND20),
+			   get_worked_flag(worked_at, BAND15),
+			   get_worked_flag(worked_at, BAND10)
+			  );
+}
+
+static int multiplier_band_mask;
+
+static int multiplier_info_eval_callback(const GMatchInfo *match, GString *res,
+	gpointer data) {
+
+    char *value = g_match_info_fetch(match, 1);
+
+    if (value[0] == '@') {  // band selector
+	int bandnr = atoi(value + 1);
+	multiplier_band_mask = inxes[bandnr2index(bandnr)];
+	// no output
+    } else {
+	int worked_at = get_multiplier_bands(value);
+	char *band_info;
+	if (multiplier_band_mask == -1) {
+	    band_info = build_multiplier_band_info(worked_at);
+	} else {
+	    band_info = g_strdup_printf("%c",
+					get_worked_flag(worked_at, multiplier_band_mask));
+	}
+
+	g_string_append(res, band_info);
+	g_free(band_info);
+    }
+
+    g_free(value);
+    return FALSE;
+}
+
+static void show_multiplier_info_templated(char **mults) {
+    mvaddstr(0, 30, "TTT MULTIPLIERS");
+
+    // look for values in curly braces
+    GRegex *regex = g_regex_new("{([^}]+)}", G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT,
+				NULL);
+
+    // default: use legacy format (all bands)
+    multiplier_band_mask = -1;
+
+    int max_line_length = 0;
+
+    GStrvBuilder *builder = g_strv_builder_new();
+    for (int i = 0; mults[i]; ++i) {
+	char *line = g_regex_replace_eval(regex, mults[i], -1, 0, 0,
+					  multiplier_info_eval_callback, NULL, NULL);
+	g_strv_builder_add(builder, g_strdup(line));
+	if (strlen(line) > max_line_length) {
+	    max_line_length = strlen(line);
+	}
+    }
+    char **lines = g_strv_builder_end(builder);
+    g_strv_builder_unref(builder);
+
+    g_regex_unref(regex);
+
+    int vert = 2;
+    int hor = (80 - max_line_length) / 2;   // center aligned
+    for (int i = 0; lines[i]; ++i) {
+	if (vert == LINES - 2) {
+	    break;
+	}
+	mvaddstr(vert, hor, lines[i]);
+	++vert;
+    }
+
+    g_strfreev(lines);
+}
+
+static void show_multiplier_info_simple(char **mults) {
+    mvaddstr(0, 30, "MULTIPLIERS");
+
+    int vert = 2;
+    int hor = 2;
+    for (int i = 0; mults[i]; ++i) {
+	bool line_break = (strcmp(mults[i], "|") == 0);
+	int width = strlen(mults[i]) + 6 + 1;   // showing for the 6 contest bands only
+	if (hor + width > 78 || line_break) {
+	    ++vert;
+	    hor = 2;
+	    if (vert == LINES - 2) {
+		break;
+	    }
+	    if (line_break) {
+		continue;
+	    }
+	}
+
+	char *mult_value = g_strdup(mults[i]);
+	g_strstrip(mult_value);
+	int worked_at = get_multiplier_bands(mult_value);
+	g_free(mult_value);
+	char *band_info = build_multiplier_band_info(worked_at);
+
+	char *info = g_strdup_printf("%s%s", mults[i], band_info);
+	g_free(band_info);
+
+	mvaddstr(vert, hor, info);
+	hor += width;
+	g_free(info);
+    }
+}
+
 void multiplierinfo(void) {
 
     int j, k, vert, hor, cnt, found;
@@ -758,10 +887,7 @@ void multiplierinfo(void) {
 		cnt++;
 	    }
 	}
-    }
-
-    if (serial_section_mult || sectn_mult_once
-	    || (sectn_mult && !CONTEST_IS(ARRL_SS))) {
+    } else if (serial_section_mult || sectn_mult_once || sectn_mult) {
 	char *tmp;
 	int worked_at;
 
@@ -802,6 +928,25 @@ void multiplierinfo(void) {
 		cnt++;
 	    }
 	}
+    } else if (plugin_has_get_multiplier_info()) {
+
+	char **mults = plugin_get_multiplier_info();
+
+	bool is_template = false;
+	for (int i = 0; mults[i]; ++i) {
+	    if (strchr(mults[i], '{')) {
+		is_template = true;
+		break;
+	    }
+	}
+
+	if (is_template) {
+	    show_multiplier_info_templated(mults);
+	} else {
+	    show_multiplier_info_simple(mults);
+	}
+
+	g_strfreev(mults);
     }
 
     attron(modify_attr(COLOR_PAIR(C_WINDOW) | A_STANDOUT));

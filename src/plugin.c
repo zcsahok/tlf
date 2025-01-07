@@ -41,6 +41,7 @@ PLUGIN_FUNC(init)
 PLUGIN_FUNC(setup)
 PLUGIN_FUNC(score)
 PLUGIN_FUNC(check_exchange)
+PLUGIN_FUNC(get_multiplier_info)
 
 #ifdef HAVE_PYTHON
 
@@ -386,6 +387,7 @@ int plugin_init(const char *name) {
     lookup_function("setup", &pf_setup);
     lookup_function("score", &pf_score);
     lookup_function("check_exchange", &pf_check_exchange);
+    lookup_function("get_multiplier_info", &pf_get_multiplier_info);
 
     int rc = call_init();
     if (rc != PARSE_OK) {
@@ -478,3 +480,28 @@ void plugin_check_exchange(struct qso_t *qso) {
 #endif
 }
 
+char **plugin_get_multiplier_info() {
+    char **result = NULL;
+#ifdef HAVE_PYTHON
+    PyObject *pValue = PyObject_CallObject(pf_get_multiplier_info, NULL);
+    if (pValue != NULL) {
+	// convert list of strings to strv
+	GStrvBuilder *builder = g_strv_builder_new();
+	int size = PyList_Size(pValue);
+	for (int i = 0; i < size; ++i) {
+	    PyObject *item = PyList_GetItem(pValue, i);
+	    g_strv_builder_add(builder, g_strdup(PyUnicode_AsUTF8(item)));
+	}
+	result = g_strv_builder_end(builder);
+	g_strv_builder_unref(builder);
+    }
+    Py_XDECREF(pValue);
+
+    if (NULL != PyErr_Occurred()) {
+	PyErr_Print();
+	sleep(2);
+	exit(1);
+    }
+#endif
+    return result;
+}

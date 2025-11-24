@@ -1022,6 +1022,7 @@ static int cfg_gmfsk(const cfg_arg_t arg) {
 	return rc;
     }
     digikeyer = GMFSK;
+    trxmode = DIGIMODE;
     return PARSE_OK;
 }
 
@@ -1049,7 +1050,7 @@ static int cfg_change_rst(const cfg_arg_t arg) {
 
 static int cfg_rttymode(const cfg_arg_t arg) {
     trxmode = DIGIMODE;
-    strcpy(modem_mode, "RTTY");
+    strcpy(digital_mode, "RTTY");
     return PARSE_OK;
 }
 
@@ -1172,6 +1173,7 @@ static int cfg_fldigi(const cfg_arg_t arg) {
     if (!fldigi_isenabled()) {
 	fldigi_toggle();
     }
+    trxmode = DIGIMODE;
 #endif
 
     return PARSE_OK;
@@ -1231,17 +1233,11 @@ static int cfg_digi_rig_mode(const cfg_arg_t arg) {
     char *str = g_ascii_strup(parameter, -1);
     g_strstrip(str);
 
-    if (strcmp(str, "USB") == 0) {
-	digi_mode = RIG_MODE_USB;
-    } else if (strcmp(str, "LSB") == 0) {
-	digi_mode = RIG_MODE_LSB;
-    } else if (strcmp(str, "RTTY") == 0) {
-	digi_mode = RIG_MODE_RTTY;
-    } else if (strcmp(str, "RTTYR") == 0) {
-	digi_mode = RIG_MODE_RTTYR;
-    } else {
+    digi_rig_mode = rig_parse_mode(str);
+
+    if (digi_rig_mode == RIG_MODE_NONE) {
+	error_details = g_strdup_printf("invalid mode %s", str);
 	g_free(str);
-	error_details = g_strdup("must be USB, LSB, RTTY, or RTTYR");
 	return PARSE_WRONG_PARAMETER;
     }
 
@@ -1408,6 +1404,7 @@ static config_t logcfg_configs[] = {
     {"SYNCFILE",        CFG_STRING_STATIC(synclogfile, 120)},
     {"INITIAL_EXCHANGE",       CFG_STRING_STATIC(exchange_list, 40)},
     {"DIGIMODEM",       CFG_STRING_STATIC(rttyoutput, 120)},
+    {"DIGITAL_MODE",    CFG_STRING_STATIC(digital_mode, 8)},
     {"FKEY-HEADER",     CFG_STRING_STATIC(fkey_header, sizeof(fkey_header))},
 
     {"CABRILLO",    CFG_STRING(cabrillo)},

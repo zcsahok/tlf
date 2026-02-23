@@ -47,7 +47,7 @@ freq_t grabspot(void) {
 	return 0;   // call input is empty
     }
 
-    spot *data = bandmap_lookup(current_qso.call);
+    spot *data = bandmap_lookup(current_qso.call, freq);
 
     if (data == NULL) {
 	return 0;   // no spot found

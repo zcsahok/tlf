@@ -135,7 +135,7 @@ void bandmap_show();
  * - 'B', 'D', 'M' switches filtering for band, dupes and mode on or off.
  */
 
-spot *bandmap_lookup(char *partialcall);
+spot *bandmap_lookup(char *partialcall, freq_t freq);
 
 spot *bandmap_next(bool upwards, freq_t freq);
 

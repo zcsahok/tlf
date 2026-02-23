@@ -969,38 +969,43 @@ spot *copy_spot(spot *data) {
 
 /** Search partialcall in filtered bandmap
  *
- * Lookup given partial call in the list of filtered bandmap spots.
- * Return a copy of the first entry found (means with the lowest frequency).
+ * Look up given partial call in the list of filtered bandmap spots.
+ * Return a copy of the entry found closest to the specified frequency.
  *
  * \param 	partialcall - part of call to look up
+ * \param 	freq - frequency of center of interest
  * \return 	spot * structure with a copy of the found spot
  * 		or NULL if not found (You have to free the structure
  * 		after use).
  */
-spot *bandmap_lookup(char *partialcall) {
+spot *bandmap_lookup(char *partialcall, freq_t freq) {
     spot *result = NULL;
 
     if ((*partialcall != '\0') && (spots->len > 0)) {
-	int i;
+	int index = -1;
+	freq_t min_df = GHz(1);
 
 	pthread_mutex_lock(&bm_mutex);
 
-	for (i = 0; i < spots->len; i++) {
-	    spot *data;
-	    data = g_ptr_array_index(spots, i);
+	for (int i = 0; i < spots->len; i++) {
+	    spot *data = g_ptr_array_index(spots, i);
+	    freq_t df = DISTANCE(data->freq, freq);
 
-	    if (strstr(data->call, partialcall) != NULL) {
-
-		/* copy data into a new Spot structure */
-		result = copy_spot(data);
-
-		break;
+	    if (df < min_df && strstr(data->call, partialcall) != NULL) {
+		min_df = df;
+		index = i;
 	    }
 	}
 
-	pthread_mutex_unlock(&bm_mutex);
+	if (index >= 0) {
+	    /* copy data into a new Spot structure */
+	    spot *data = g_ptr_array_index(spots, index);
+	    result = copy_spot(data);
+	}
 
+	pthread_mutex_unlock(&bm_mutex);
     }
+
     return result;
 }
 

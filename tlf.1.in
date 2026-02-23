@@ -1341,10 +1341,11 @@ Enter QSO edit mode.
 .
 .TP
 .B Alt-G
-Grab first spot from bandmap which has the characters in the call input field
-in its call.
+Selects (grabs) the entry from the bandmap whose callsign contains
+the characters entered in the call input field and
+which is located closest to the current operating frequency.
 .
-Allows the operator to selectively grab a specific call from the bandmap.
+Allows the operator to selectively switch to a specific call from the bandmap.
 .
 .TP
 .B Alt-H

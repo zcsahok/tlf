@@ -60,11 +60,11 @@
 
 pthread_mutex_t bm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/** \brief sorted list of all recent DX spots
+/** \brief list sorted by frequency of all recent DX spots
  */
 GList *allspots = NULL;
 
-/** \brief sorted list of filtered spots
+/** \brief sorted list of spots filtered for display
  */
 GPtrArray *spots;
 
@@ -78,12 +78,10 @@ bm_config_t bm_config = {
     .show_out_of_band = false,  /* do not show out-of-band spots */
 };
 
-static bool bm_initialized = false;
-
-char *qtc_format(char *call);
-gint cmp_freq(spot *a, spot *b);
+static char *qtc_format(char *call);
+static gint cmp_freq(spot *a, spot *b);
 void free_spot(spot *data);
-spot *copy_spot(spot *data);
+static spot *copy_spot(spot *data);
 
 /*
  * write bandmap spots to a file
@@ -212,6 +210,7 @@ void bmdata_read_file() {
  * initialize colors and data structures for bandmap operation
  */
 void bm_init() {
+    static bool bm_initialized = false;
 
     if (bm_initialized)
 	return;
@@ -236,7 +235,7 @@ void bm_init() {
  *
  * \return CWMODE, DIGIMODE or SSBMODE
  */
-int freq2mode(freq_t freq, int band) {
+static int freq2mode(freq_t freq, int band) {
     if (freq <= cwcorner[band])
 	return CWMODE;
     else if (freq < ssbcorner[band])
@@ -273,12 +272,12 @@ void bm_add(char *s) {
 }
 
 /* compare functions to search in list */
-gint	cmp_call(spot *ldata, char *call) {
+static gint	cmp_call(spot *ldata, char *call) {
 
     return g_strcmp0(ldata->call, call);
 }
 
-gint	cmp_freq(spot *a, spot *b) {
+static gint	cmp_freq(spot *a, spot *b) {
     unsigned int af = a->freq;
     unsigned int bf = b->freq;
 
@@ -431,7 +430,6 @@ void bandmap_age() {
     /*
      * go through all entries
      *   + decrement timeout
-     *   + set state to new, normal, aged or dead
      *   + if dead -> drop it from collection
      */
 
@@ -506,7 +504,7 @@ bool bm_isdupe(char *call, int band) {
     return false;
 }
 
-void bm_show_info() {
+static void bm_show_info() {
 
     int curx, cury;
 
@@ -555,8 +553,8 @@ void bm_show_info() {
  * - new 	bright blue
  * - normal	blue
  * - aged	brown
- * - worked	small caps */
-void colorize_spot(spot *data) {
+ * - worked	grey, small caps */
+static void colorize_spot(spot *data) {
 
     if (data -> timeout > SPOT_NORMAL)
 	attrset(COLOR_PAIR(CB_NEW) | A_BOLD);
@@ -573,11 +571,47 @@ void colorize_spot(spot *data) {
     }
 }
 
-/* helper function for bandmap display
- * convert dupes to lower case
- * add QTC flags for WAE contest
+/*
+ * copy string to buffer but truncate it to n characters
+ * If truncated show it by replacing last two chars by '..'
+ * The buffer has to be at least n+1 chars long.
  */
-char *format_spot(spot *data) {
+static void str_truncate(char *buffer, char *string, int n) {
+    if (strlen(string) > n) {
+	g_strlcpy(buffer, string, n - 1);   	/* truncate to n-2 chars */
+	strcat(buffer, "..");
+    } else {
+	g_strlcpy(buffer, string, n + 1); 	/* copy up to n chars */
+    }
+}
+
+/*
+ * format bandmap call output for WAE
+ * - prepare and return a temporary string from call and number of QTCs
+ *   (if any)
+ */
+static char *qtc_format(char *call) {
+    char tcall[15];
+    char qtcflag;
+    struct t_qtc_store_obj *qtc_temp_ptr;
+
+    qtc_temp_ptr = qtc_get(call);
+    qtcflag = qtc_get_value(qtc_temp_ptr);
+
+    if (qtc_temp_ptr->total <= 0 && qtcflag == '\0') {
+	str_truncate(tcall, call, SPOT_CALL_WIDTH);
+    } else {
+	str_truncate(tcall, call, SPOT_CALL_WIDTH - 2);
+	sprintf(tcall + strlen(tcall), " %c", qtcflag);
+    }
+    return g_strdup(tcall);
+}
+
+/* helper function for bandmap display
+ * add QTC flags for WAE contest
+ * convert dupes to lower case
+ */
+static char *format_spot(spot *data) {
     char *temp;
     char *temp2;
 
@@ -609,7 +643,7 @@ static char get_spot_marker(spot *data) {
 /* helper function for bandmap display
  * shows formatted spot on actual cursor position
  */
-void show_spot(spot *data) {
+static void show_spot(spot *data) {
     attrset(COLOR_PAIR(CB_DUPE) | A_BOLD);
     printw("%7.1f%c", (data->freq / 1000.),
 	   (data->node == thisnode ? '*' : data->node));
@@ -632,7 +666,7 @@ void show_spot(spot *data) {
 /* helper function for bandmap display
  * shows spot on actual working frequency
  */
-void show_spot_on_qrg(spot *data) {
+static void show_spot_on_qrg(spot *data) {
 
     printw("%7.1f%c%c ", (data->freq / 1000.),
 	   (data->node == thisnode ? '*' : data->node),
@@ -644,9 +678,9 @@ void show_spot_on_qrg(spot *data) {
 }
 
 /* helper function for bandmap display
- * advance to next spot position
+ * advance to display position for next spot
  */
-void next_spot_position(int *y, int *x) {
+static void next_spot_position(int *y, int *x) {
     *y += 1;
     if (*y == LASTLINE + 1) {
 	*y = TOPLINE;
@@ -661,7 +695,7 @@ void next_spot_position(int *y, int *x) {
  * Otherwise calculate center frequency from band and mode
  * as middle value of the band/mode corners.
  */
-freq_t bm_get_center(int band, int mode) {
+static freq_t bm_get_center(int band, int mode) {
     freq_t centerfrequency;
 
     if (trx_control)
@@ -690,18 +724,11 @@ static bool mode_matches(spot *data) {
 /*
  * filter 'allspots' list according to settings and prepare 'spots' array with
  * selected spots
+ * !! should only be used with bm_mutex locked !!
  */
-void filter_spots() {
+static void filter_spots() {
     GList *list;
     spot *data;
-    /* acquire mutex
-     * do not add new spots to allspots during
-     * - aging and
-     * - filtering
-     * furthermore do not allow call lookup as long as
-     * filtered spot array is build anew */
-
-    pthread_mutex_lock(&bm_mutex);
 
     if (spots)
 	g_ptr_array_free(spots, TRUE);		/* free spot array */
@@ -742,8 +769,13 @@ void filter_spots() {
 	    g_ptr_array_add(spots, copy);
 	}
     }
-    pthread_mutex_unlock(&bm_mutex);
 }
+
+
+/* index to first displayed entry from filtered spot array */
+unsigned int startindex;
+/* index to first entry beyond the displayed spots */
+unsigned int stopindex;
 
 void bandmap_show() {
     /*
@@ -751,6 +783,7 @@ void bandmap_show() {
      * - all bands on/off
      * - all mode  on/off
      * - dupes     on/off
+     * - only Mults on/off
      *
      * If more entries to show than room in window, show around
      * current frequency
@@ -759,10 +792,11 @@ void bandmap_show() {
      * - new 	bright blue
      * - normal	blue
      * - aged	brown
-     * - worked	small caps
+     * - worked	small caps, grey
      * - new multi	mark with blue M between QRG and call
      * - self announced stations
      *   		small preceding letter for reporting station
+     *   		star if reported by own station
      *
      * show own frequency as dashline in green color
      * - highlight actual spot if near own frequency
@@ -786,32 +820,16 @@ void bandmap_show() {
     int i, j;
 
     bm_init();
+
+    /* do not add new spots to allspots during
+     * - aging and
+     * - filtering
+     * furthermore do not allow call lookup as long as
+     * filtered spot is build anew and display range is calculated
+     * (spots array and display range needs to stay in sync) */
+    pthread_mutex_lock(&bm_mutex);
+
     filter_spots();
-
-    /* afterwards display filtered list around own QRG +/- some offset
-     * (offset gets reset if we change frequency */
-
-    getyx(stdscr, cury, curx);		/* remember cursor */
-
-    /* start in TOPLINE, column 0 */
-    bm_y = TOPLINE;
-    bm_x = 0;
-
-    /* clear space for bandmap */
-    attrset(COLOR_PAIR(CB_DUPE) | A_BOLD);
-
-    move(bm_y, 0);			/* do not overwrite # frequency */
-    for (j = 0; j < 67; j++)
-	addch(' ');
-
-    for (i = bm_y + 1; i < LASTLINE + 1; i++) {
-	move(i, 0);
-	for (j = 0; j < 80; j++)
-	    addch(' ');
-    }
-
-    /* show info text */
-    bm_show_info();
 
     /* split bandmap into two parts below and above current QRG.
      * Give both both parts equal size.
@@ -823,7 +841,6 @@ void bandmap_show() {
      */
     unsigned int below_qrg = 0;
     unsigned int on_qrg = 0;
-    unsigned int startindex, stopindex;
 
     const freq_t centerfrequency = bm_get_center(bandinx, trxmode);
 
@@ -873,6 +890,33 @@ void bandmap_show() {
 	if (spots->len < stopindex)
 	    stopindex = spots->len;
     }
+
+    pthread_mutex_unlock(&bm_mutex);
+
+
+    /* afterwards display filtered list around own QRG
+     * from start- to stopindex */
+    getyx(stdscr, cury, curx);		/* remember cursor */
+
+    /* start in TOPLINE, column 0 */
+    bm_y = TOPLINE;
+    bm_x = 0;
+
+    /* clear space for bandmap */
+    attrset(COLOR_PAIR(CB_DUPE) | A_BOLD);
+
+    move(bm_y, 0);			/* do not overwrite # frequency */
+    for (j = 0; j < 67; j++)
+	addch(' ');
+
+    for (i = bm_y + 1; i < LASTLINE + 1; i++) {
+	move(i, 0);
+	for (j = 0; j < 80; j++)
+	    addch(' ');
+    }
+
+    /* show info text */
+    bm_show_info();
 
     /* show spots below QRG */
     for (i = startindex; i < below_qrg; i++) {
@@ -948,7 +992,7 @@ void bm_menu() {
     refreshp();
 }
 
-spot *copy_spot(spot *data) {
+static spot *copy_spot(spot *data) {
     spot *result = NULL;
 
     result = g_new0(spot, 1);
@@ -985,7 +1029,7 @@ spot *bandmap_lookup(char *partialcall) {
 
 	pthread_mutex_lock(&bm_mutex);
 
-	for (i = 0; i < spots->len; i++) {
+	for (i = startindex; i < stopindex; i++) {
 	    spot *data;
 	    data = g_ptr_array_index(spots, i);
 
@@ -1048,42 +1092,6 @@ spot *bandmap_next(bool upwards, freq_t freq) {
     pthread_mutex_unlock(&bm_mutex);
 
     return result;
-}
-
-/*
- * copy string to buffer but truncate it to n characters
- * If truncated show it by replacing last two chars by '..'
- * The buffer has to be at least n+1 chars long.
- */
-void str_truncate(char *buffer, char *string, int n) {
-    if (strlen(string) > n) {
-	g_strlcpy(buffer, string, n - 1);   	/* truncate to n-2 chars */
-	strcat(buffer, "..");
-    } else {
-	g_strlcpy(buffer, string, n + 1); 	/* copy up to n chars */
-    }
-}
-
-/*
- * format bandmap call output for WAE
- * - prepare and return a temporary string from call and number of QTCs
- *   (if any)
- */
-char *qtc_format(char *call) {
-    char tcall[15];
-    char qtcflag;
-    struct t_qtc_store_obj *qtc_temp_ptr;
-
-    qtc_temp_ptr = qtc_get(call);
-    qtcflag = qtc_get_value(qtc_temp_ptr);
-
-    if (qtc_temp_ptr->total <= 0 && qtcflag == '\0') {
-	str_truncate(tcall, call, SPOT_CALL_WIDTH);
-    } else {
-	str_truncate(tcall, call, SPOT_CALL_WIDTH - 2);
-	sprintf(tcall + strlen(tcall), " %c", qtcflag);
-    }
-    return g_strdup(tcall);
 }
 
 /** Search filtered bandmap for a spot near the given frequency

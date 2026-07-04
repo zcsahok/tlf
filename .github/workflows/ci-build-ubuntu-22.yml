@@ -2,7 +2,7 @@ name: CI build for Ubuntu 22
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, test_action_main ]
   pull_request:
     branches: [ master ]
 

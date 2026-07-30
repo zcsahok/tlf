@@ -301,10 +301,7 @@ int qso_points;		/**< number of points for last qso */
 int qsos_per_band[NBANDS];
 bool partials = false;	/**< show partial calls */
 bool use_part = false;	/**< use automatically found partial call */
-int block_part = 0; 	/**< if 1 block the call autocompletion
-			  for these QSO */
-char para_word[80] = "LODNCFS:3C\n";	/* longcw, cluster, search, DE,
-					   contest, filter,  speed,  delay */
+bool block_part = false;/**< true: block call autocompletion for this QSO */
 char lastmsg[1000] = "";
 
 /*-------------------------------------keyer------------------------------*/

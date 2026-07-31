@@ -1,18 +1,20 @@
 #########################################
 # SPDX contest for stations outside SP  #
 #        PA0R, 3.10.2003                #
+#   https://spdxcontest.pzk.org.pl      #
 #########################################
 #
 CONTEST=spdx_dx
 LOGFILE=spdx.log
 CONTEST_MODE
 CABRILLO=UNIVERSAL
+CABRILLO-CONTEST=SPDX
 #################################
 MULT_LIST=spdxmults
 COUNTRYLIST=SP
-USE_COUNTRYLIST_ONLY
 COUNTRY_LIST_POINTS=3
 SECTION_MULT
+SERIAL_OR_SECTION
 RECALL_MULTS
 SERIAL_EXCHANGE
 SHORT_SERIAL

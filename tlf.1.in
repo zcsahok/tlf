@@ -2837,6 +2837,10 @@ instead.
 Points for countries in country list.
 .
 .TP
+\fUSE_COUNTRYLIST_ONLY\fR
+Deprecated. Please do not use any longer.
+.
+.TP
 \fBCOUNTRYLIST\fR=\fI"comma separated list of prefixes"\fR
 e.g. SM,LA,OZ,OH.
 .

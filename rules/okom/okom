@@ -6,14 +6,35 @@ CONTEST=okom
 LOGFILE=okom.log
 CONTEST_MODE
 CABRILLO=UNIVERSAL
-CABRILLO-CONTEST=OKOM
+CABRILLO-CONTEST=OK-OM-DX
+
+#================================
+# Select one of following blocks:
+#--------------------------------
 #
-MULT_LIST=okommults
-COUNTRYLIST=OK,OM
-COUNTRY_LIST_POINTS=1
-USE_COUNTRYLIST_ONLY
-SERIAL_OR_SECTION
-SECTION_MULT
+# non-OK/OM stations send serial number
+#
+CABRILLO-EXCHANGE=#
+F3=@ ++5NN-- #
+S&P_TU_MSG=TU ++5NN-- #
+#--------------------------------
+#
+# OK/OM stanice: okresní znak (tři písmena, XXX).
+#
+##CABRILLO-EXCHANGE= XXX
+##F3=@ ++5NN-- XXX
+##S&P_TU_MSG=TU ++5NN-- XXX
+#================================
+
+
+# Scoring:
+# (handled by okom.py)
+
+# Multipliers:
+# OK/OM districts and DXCC countries per band
+# (handled by okom.py)
+GENERIC_MULT=BAND
+
 INITIAL_EXCHANGE=ok_om.txt
 RECALL_MULTS
 
@@ -36,7 +57,7 @@ RECALL_MULTS
 #
 F1=+TEST -% %+TEST-
 F2=%
-F3=+@ 5NN -# #
+#F3=+@ 5NN -# #
 F4=TU 73
 F5=@
 F6=%
@@ -48,5 +69,5 @@ F11=PSE K
 F12=+TEST -% %+ TEST-
 #
 CQ_TU_MSG=+TU -%+ TEST-
-S&P_TU_MSG=+TU 5NN -# #
+#S&P_TU_MSG=+TU 5NN -# #
 

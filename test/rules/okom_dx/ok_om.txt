@@ -1,0 +1,1 @@
+../../../share/ok_om.txt

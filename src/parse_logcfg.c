@@ -56,6 +56,7 @@
 
 bool exist_in_country_list();
 
+void Complain(char *msg);
 void KeywordNotSupported(const char *keyword);
 void ParameterNeeded(const char *keyword);
 void ParameterUnexpected(const char *keyword);
@@ -809,9 +810,6 @@ static int cfg_countrylist(const cfg_arg_t arg) {
 	}
     }
 
-    /* on which multiplier side of the rules we are */
-    getpx(my.call);
-    mult_side = exist_in_country_list();
     setcontest(whichcontest);
     free(buffer);
 
@@ -912,10 +910,8 @@ static int cfg_continentlist(const cfg_arg_t arg) {
 }
 
 static int cfg_country_list_only(const cfg_arg_t arg) {
-    countrylist_only = true;
-    if (mult_side) {
-	countrylist_only = false;
-    }
+    Complain("USE_COUNTRYLIST_ONLY is deprecated, see man page");
+
     return PARSE_OK;
 }
 
@@ -1457,7 +1453,7 @@ static config_t logcfg_configs[] = {
     {"DX_&_SECTIONS",   NO_PARAM, cfg_dx_n_sections},
     {"COUNTRYLIST",     NEED_PARAM, cfg_countrylist},
     {"CONTINENTLIST",   NEED_PARAM, cfg_continentlist},
-    {"USE_COUNTRYLIST_ONLY",    NO_PARAM, cfg_country_list_only},
+    {"USE_COUNTRYLIST_ONLY", OPTIONAL_PARAM, cfg_country_list_only},
     {"SIDETONE_VOLUME", NEED_PARAM, cfg_sc_volume},
     {"MFJ1278_KEYER",   NEED_PARAM, cfg_mfj1278_keyer},
     {"CHANGE_RST",      OPTIONAL_PARAM, cfg_change_rst},

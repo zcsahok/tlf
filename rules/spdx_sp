@@ -1,18 +1,27 @@
 #########################################
 # SPDX contest for stations outside SP  #
 #        PA0R, 3.10.2003                #
+#   https://spdxcontest.pzk.org.pl      #
 #########################################
 #
 CONTEST=spdx_sp
 LOGFILE=spdx.log
 CONTEST_MODE
 CABRILLO=UNIVERSAL
+CABRILLO-CONTEST=SPDX
+#
+# Zmień B na jednoliterowy skrót swojego województwa
+# (patrz również poniżej F3 oraz S&P_TU_MSG)
+#
+CABRILLO-EXCHANGE=B
+#
 #################################
 MY_COUNTRY_POINTS=0
 MY_CONTINENT_POINTS=1
 DX_POINTS=3
 COUNTRY_MULT
-SERIAL_EXCHANGE
+COUNTRYLIST=SP
+EXCLUDE_MULTILIST=COUNTRYLIST
 NOB4
 #
 ##################################

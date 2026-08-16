@@ -66,7 +66,8 @@ static int remember_generic_mult(struct qso_t *qso, bool check_only) {
 	gchar *mult = g_strdup(word);
 	g_strchomp(mult);   // remove trailing whitespace for mult check
 
-	int mult_index = remember_multi(mult, qso->bandindex, generic_mult, check_only);
+	int mult_index = remember_multi(mult, qso->bandindex, qso->mode, generic_mult,
+					check_only);
 
 	if (mult_index >= 0) {
 	    if (first_mult_index < 0) {
@@ -111,29 +112,30 @@ static int addmult_internal(struct qso_t *qso, bool check_only) {
 
 	idx = get_exact_mult_index(qso->mult1_value);
 	if (idx >= 0) {
-	    remember_multi(get_mult(idx), qso->bandindex, MULT_ALL, check_only);
+	    remember_multi(get_mult(idx), qso->bandindex, qso->mode, MULT_ONCE, check_only);
 	    // NOTE: return value not used, new mult is not marked in log
 	}
     }
 
     // ---------------------------serial + section ---------------------------
-    else if (serial_section_mult || sectn_mult) {
+    else if (serial_section_mult) {
 
 	/* is it a mult? */
 	idx = get_exact_mult_index(qso->mult1_value);
 	if (idx >= 0) {
 	    mult_index =
-		remember_multi(get_mult(idx), qso->bandindex, MULT_BAND, check_only);
+		remember_multi(get_mult(idx), qso->bandindex, qso->mode, MULT_BAND, check_only);
 	}
     }
 
-    // --------------------------- section_mult_once--------------------------
-    else if (sectn_mult_once) {
+    // --------------------------- section_mult --------------------------
+    else if (sectn_mult != MULT_NONE) {
 	/* is it a mult? */
 	idx = get_exact_mult_index(qso->mult1_value);
 	if (idx >= 0) {
 	    mult_index =
-		remember_multi(get_mult(idx), qso->bandindex, MULT_ALL, check_only);
+		remember_multi(get_mult(idx), qso->bandindex, qso->mode, sectn_mult,
+			       check_only);
 	}
     }
 
@@ -143,31 +145,26 @@ static int addmult_internal(struct qso_t *qso, bool check_only) {
 	idx = get_exact_mult_index(qso->mult1_value);
 	if (idx >= 0) {
 	    mult_index =
-		remember_multi(get_mult(idx), qso->bandindex, MULT_BAND, check_only);
+		remember_multi(get_mult(idx), qso->bandindex, qso->mode, MULT_BAND, check_only);
 	}
     }
 
     // --------------------wysiwyg----------------
-    else if (wysiwyg_once) {
-	mult_index = remember_multi(stripped_comment, qso->bandindex, MULT_ALL,
-				    check_only);
-    }
-
-    else if (wysiwyg_multi) {
-	mult_index = remember_multi(stripped_comment, qso->bandindex, MULT_BAND,
-				    check_only);
+    else if (wysiwyg_mult != MULT_NONE) {
+	mult_index = remember_multi(stripped_comment, qso->bandindex, qso->mode,
+				    wysiwyg_mult, check_only);
     }
 
     /* -------------- unique call multi -------------- */
     else if (unique_call_multi != MULT_NONE) {
-	mult_index = remember_multi(qso->call, qso->bandindex, unique_call_multi,
-				    check_only);
+	mult_index = remember_multi(qso->call, qso->bandindex, qso->mode,
+				    unique_call_multi, check_only);
     }
 
     /* ------------ grid mult (per band) ------------- */
     else if (serial_grid4_mult) {
-	mult_index = remember_multi(qso->mult1_value, qso->bandindex, MULT_BAND,
-				    check_only);
+	mult_index = remember_multi(qso->mult1_value, qso->bandindex, qso->mode,
+				    MULT_BAND, check_only);
     }
 
     // -----------   generic: use mult1   -----------
@@ -196,6 +193,7 @@ void addmult_lan(void) {
     char stripped_comment[21];
     char multi_call[20];
     bool check_only = false;//FIXME param
+    int mode = CWMODE;//FIXME use actual mode
 
     new_mult = -1;
 
@@ -213,35 +211,29 @@ void addmult_lan(void) {
 	}
 
 	if (idx >= 0) {
-	    remember_multi(get_mult(idx), bandinx, MULT_ALL, check_only);
+	    remember_multi(get_mult(idx), bandinx, mode, MULT_ONCE, check_only);
 	}
     }
 
     // --------------------wysiwyg----------------
-    if (wysiwyg_once) {
+    if (wysiwyg_mult != MULT_NONE) {
 	g_strlcpy(stripped_comment, lan_logline + 54, 15);
 	g_strchomp(stripped_comment);
 
-	new_mult = remember_multi(stripped_comment, bandinx, MULT_ALL, check_only);
-    }
-
-    if (wysiwyg_multi) {
-	g_strlcpy(stripped_comment, lan_logline + 54, 15);
-	g_strchomp(stripped_comment);
-
-	new_mult = remember_multi(stripped_comment, bandinx, MULT_BAND, check_only);
+	new_mult = remember_multi(stripped_comment, bandinx, mode, wysiwyg_mult,
+				  check_only);
     }
 
     /* -------------- unique call multi -------------- */
     g_strlcpy(multi_call, lan_logline + 68, 10);
     g_strchomp(multi_call);
 
-    if (unique_call_multi == MULT_ALL) {
-	new_mult = remember_multi(multi_call, bandinx, MULT_ALL, check_only);
+    if (unique_call_multi == MULT_ONCE) {
+	new_mult = remember_multi(multi_call, bandinx, mode, MULT_ONCE, check_only);
     }
 
     if (unique_call_multi == MULT_BAND) {
-	new_mult = remember_multi(multi_call, bandinx, MULT_BAND, check_only);
+	new_mult = remember_multi(multi_call, bandinx, mode, MULT_BAND, check_only);
     }
 
 }
@@ -444,62 +436,59 @@ int init_and_load_multipliers(void) {
 
 /** initialize mults scoring
  *
- * empties multis[] array, set the number of multis and multscore per band to 0.
+ * empties multis[] array,
+ * sets the number of multis and multscore per band to 0.
  */
 void init_mults() {
-    int n;
-
-    for (n = 0; n < MAX_MULTS; n++) {
-	multis[n].name[0] = '\0';
-	multis[n].band = 0;
-    }
-
+    memset(multis, 0, sizeof(multis));
+    memset(multscore, 0, sizeof(multscore));
     nr_multis = 0;
-
-    for (n = 0; n < NBANDS; n++)
-	multscore[n] = 0;
 }
 
 static pthread_mutex_t mult_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/** register worked multiplier and check if its new
+/** register worked multiplier and check if it's a new one
  *
  * Check if multiplier is already registered. If not make a new entry in
  * multis[] array and increment the total mults count 'nr_multis'.
- * Mark the mult as worked on the actual band. If it is a new band
+ * Mark the mult as worked on the actual band. If it is a new band or mode
  * increase the bandspecific 'multscore[band]'.
  *
  * \param multiplier  - the multiplier as a string
  * \param band	      - the bandindex we are on
+ * \param mode        - the mode used in this QSO
  * \param mult_mode   - MULT_BAND -> check also if new band
  * \param check_only  - do not record mult, only check it
- * \return	      - index into mults[] array if new mult or on new band
+ * \return	      - index into mults[] array if new mult or on new band/mode
  *			(-1 if multiplier is an empty string or not new)
  */
-int remember_multi(char *multiplier, int band, int mult_mode, bool check_only) {
-    /* search multbuffer in mults array */
+int remember_multi(char *multiplier, int band, int mode, int mult_mode,
+		   bool check_only) {
+
     bool found = false;
     int index = -1;
     if (multiplier == NULL || *multiplier == '\0' || mult_mode == MULT_NONE)
 	return -1;      /* ignore if empty string or disabled */
+
+    int bandmask = inxes[band];
+
+    int effective_mode = CWMODE;
+    if (mult_mode == MULT_BAND_MODE) {
+	effective_mode = mode;  // use actual mode for band+mode
+    }
 
     pthread_mutex_lock(&mult_mutex);
 
     for (int i = 0; i < nr_multis; i++) {
 	/* already in list? */
 	if (strcmp(multis[i].name, multiplier) == 0) {
-	    found = 1;
+	    found = true;
 
-	    /* new band? check if mult is per band */
-	    if ((multis[i].band & inxes[band]) == 0) {
+	    /* new band or mode? */
+	    if ((multis[i].band[effective_mode] & bandmask) == 0) {
 
-		if (!check_only) {
-		    // update band even if not strictly needed
-		    multis[i].band |= inxes[band];
-		}
-
-		if (mult_mode == MULT_BAND) {
-		    index = i;  // new band
+		if (mult_mode == MULT_BAND || mult_mode == MULT_BAND_MODE) {
+		    index = i;  // yes, a new one
 		}
 	    }
 
@@ -508,7 +497,7 @@ int remember_multi(char *multiplier, int band, int mult_mode, bool check_only) {
     }
 
     // found && index < 0: not new mult
-    // found && index >= 0: existing mult on a new band
+    // found && index >= 0: existing mult on a new band or mode
     // !found: new mult
 
     if (!found) {
@@ -520,7 +509,7 @@ int remember_multi(char *multiplier, int band, int mult_mode, bool check_only) {
 	    strcpy(multis[index].name, multiplier);
 	    nr_multis++;
 	}
-	multis[index].band |= inxes[band];
+	multis[index].band[effective_mode] |= bandmask;
 	multscore[band]++;
     }
 

@@ -173,18 +173,22 @@ int get_nr_of_mults() {
     } else if (CONTEST_IS(PACC_PA)) {
 
 	return totalcountries;
-    } else if (wysiwyg_once
-	       || unique_call_multi == MULT_ALL
-	       || generic_mult == MULT_ALL
-	       || sectn_mult_once) {
+    } else if (wysiwyg_mult == MULT_ONCE
+	       || unique_call_multi == MULT_ONCE
+	       || generic_mult == MULT_ONCE
+	       || sectn_mult == MULT_ONCE) {
 
 	return nr_multis;
-    } else if (wysiwyg_multi
+    } else if (wysiwyg_mult == MULT_BAND
+	       || wysiwyg_mult == MULT_BAND_MODE
 	       || unique_call_multi == MULT_BAND
+	       || unique_call_multi == MULT_BAND_MODE
 	       || generic_mult == MULT_BAND
+	       || generic_mult == MULT_BAND_MODE
 	       || serial_section_mult
 	       || serial_grid4_mult
-	       || sectn_mult) {
+	       || sectn_mult == MULT_BAND
+	       || sectn_mult == MULT_BAND_MODE) {
 
 	return totalmults;
     } else if (CONTEST_IS(WPX) || pfxmult) {
@@ -240,9 +244,12 @@ void showscore(void) {
     display_header(bi_array);
 
     /* show mults per band, if applicable */
-    if (wysiwyg_multi
+    if (wysiwyg_mult == MULT_BAND
+	    || wysiwyg_mult == MULT_BAND_MODE
 	    || unique_call_multi == MULT_BAND
+	    || unique_call_multi == MULT_BAND_MODE
 	    || generic_mult == MULT_BAND
+	    || generic_mult == MULT_BAND_MODE
 	    || serial_section_mult
 	    || serial_grid4_mult
 	    || sectn_mult) {

@@ -92,12 +92,10 @@ int exclude_multilist_type = EXCLUDE_NONE;
 
 bool portable_x2 = false;
 int recall_mult = 0;
-bool wysiwyg_once = false;
-bool wysiwyg_multi = false;
+int wysiwyg_mult = MULT_NONE;
 bool country_mult = false;
 float fixedmult = 0.0;
-bool sectn_mult = false;
-bool sectn_mult_once = false;
+int sectn_mult = MULT_NONE;
 bool dx_arrlsections = false;
 bool serial_section_mult = false;
 bool serial_or_section = false;	/* exchange is serial OR section, like HA-DX */

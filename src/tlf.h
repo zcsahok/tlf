@@ -40,9 +40,6 @@ enum {
     HAMLIB_KEYER,
 };
 
-#define SINGLE 0        /* single op */
-#define MULTI 1         /* multi op / single tx */
-
 #define TELNET_INTERFACE 1
 #define TNC_INTERFACE 2
 #define NETWORK_INTERFACE 3
@@ -70,9 +67,12 @@ extern bool keyboard_mode;
 #define FILTER_TALK 2
 #define FILTER_DX 3
 
-#define CWMODE 0
-#define SSBMODE 1
-#define DIGIMODE 2
+enum {
+    CWMODE = 0,
+    SSBMODE,
+    DIGIMODE,
+    NMODES
+};
 
 #define  BAND60 512
 #define  BAND30 256
@@ -132,8 +132,9 @@ enum {
 
 enum {
     MULT_NONE,      // multiplier not used
-    MULT_ALL,       // multiplier counted once on all bands
-    MULT_BAND,      // multiplier counted once per each band
+    MULT_ONCE,      // multiplier counted once (regadless of band or mode)
+    MULT_BAND,      // multiplier counted per each band (regardless of mode)
+    MULT_BAND_MODE, // multiplier counted per each band and mode
 };
 
 #define EXCLUDE_NONE 0
@@ -185,9 +186,8 @@ typedef struct {
  * all information about worked multis */
 typedef struct {
     char name[MULT_SIZE];	/**< Multiplier */
-    int band;			/**< bitmap with bands the multi was worked */
+    int band[NMODES];		/**< bitmap of bands per mode the multi was worked */
 } mults_t;
-
 
 #define MAXPFXNUMMULT 30
 #define PFXNUMBERS 10

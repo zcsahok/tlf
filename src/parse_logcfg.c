@@ -1216,15 +1216,17 @@ static int set_multi_mode(const cfg_arg_t arg, int *config) {
     char *str = g_ascii_strup(parameter, -1);
     g_strstrip(str);
 
-    if (strcmp(str, "ALL") == 0) {
-	*config = MULT_ALL;
+    if (strcmp(str, "ALL") == 0 || strcmp(str, "ONCE") == 0) {
+	*config = MULT_ONCE;
     } else if (strcmp(str, "BAND") == 0) {
 	*config = MULT_BAND;
+    } else if (strcmp(str, "BAND+MODE") == 0) {
+	*config = MULT_BAND_MODE;
     } else if (strcmp(str, "NONE") == 0) {
 	*config = MULT_NONE;
     } else {
 	g_free(str);
-	error_details = g_strdup("must be ALL, BAND or NONE");
+	error_details = g_strdup("must be ALL, BAND, BAND+MODE or NONE");
 	return PARSE_WRONG_PARAMETER;
     }
 
@@ -1238,6 +1240,47 @@ static int cfg_unique_call_multi(const cfg_arg_t arg) {
 
 static int cfg_generic_mult(const cfg_arg_t arg) {
     return set_multi_mode(arg, &generic_mult);
+}
+
+static int cfg_wysiwyg_mult(const cfg_arg_t arg) {
+    return set_multi_mode(arg, &wysiwyg_mult);
+}
+
+static int parse_bool_mult_config(int *var, int true_value) {
+    bool value;
+    int rc = parse_bool(parameter, &value);
+    if (rc != PARSE_OK) {
+	return rc;
+    }
+
+    *var = (value ? true_value : MULT_NONE);
+
+    return PARSE_OK;
+}
+
+static int cfg_wysiwyg_multiband(const cfg_arg_t arg) {
+    return parse_bool_mult_config(&wysiwyg_mult, MULT_BAND);
+}
+
+static int cfg_wysiwyg_once(const cfg_arg_t arg) {
+    return parse_bool_mult_config(&wysiwyg_mult, MULT_ONCE);
+}
+
+static int cfg_section_mult_once(const cfg_arg_t arg) {
+    return parse_bool_mult_config(&sectn_mult, MULT_ONCE);
+}
+
+//
+// special handling for backward compatibility:
+//  - first try to parse it as a boolean (legacy behavior)
+//  - if it fails, then it must be a valid multiplier configuration
+//
+static int cfg_section_mult(const cfg_arg_t arg) {
+    int rc = parse_bool_mult_config(&sectn_mult, MULT_BAND);
+    if (rc == PARSE_OK) {
+	return PARSE_OK;
+    }
+    return set_multi_mode(arg, &sectn_mult);
 }
 
 static int cfg_digi_rig_mode(const cfg_arg_t arg) {
@@ -1302,8 +1345,8 @@ static config_t logcfg_configs[] = {
     {"PARTIALS",	    CFG_BOOL(partials)},
     {"RECALL_MULTS",	    CFG_CONTEST_BOOL(recall_mult)},
     {"RECALL_NUMERIC_EXCHANGES",      CFG_CONTEST_BOOL(recall_numeric_exchanges)},
-    {"WYSIWYG_MULTIBAND",   CFG_BOOL(wysiwyg_multi)},
-    {"WYSIWYG_ONCE",	    CFG_BOOL(wysiwyg_once)},
+    {"WYSIWYG_MULTIBAND",   OPTIONAL_PARAM, cfg_wysiwyg_multiband},
+    {"WYSIWYG_ONCE",	    OPTIONAL_PARAM, cfg_wysiwyg_once},
     {"RIT_CLEAR",	    CFG_BOOL(rit)},
     {"SHORT_SERIAL",	    CFG_INT_ONE(shortqsonr)},
     {"LEADING_ZEROS_SERIAL",	    CFG_BOOL(leading_zeros_serial)},
@@ -1319,7 +1362,7 @@ static config_t logcfg_configs[] = {
     {"TIME_MASTER",	    CFG_BOOL(time_master)},
     {"CTCOMPATIBLE",	    CFG_BOOL(ctcomp)},
     {"SERIAL\\+SECTION",    CFG_BOOL(serial_section_mult)},
-    {"SECTION_MULT",	    CFG_BOOL(sectn_mult)},
+    {"SECTION_MULT",	    OPTIONAL_PARAM, cfg_section_mult},
     {"NOB4",		    CFG_BOOL(nob4)},
     {"SHOW_TIME",	    CFG_BOOL(show_time)},
     {"RXVT",		    CFG_BOOL(use_rxvt)},
@@ -1344,7 +1387,7 @@ static config_t logcfg_configs[] = {
     {"BMAUTOADD",       CFG_BOOL(bmautoadd)},
     {"SPRINTMODE",      CFG_BOOL(sprint_mode)},
     {"KEYER_BACKSPACE", CFG_BOOL(keyer_backspace)},
-    {"SECTION_MULT_ONCE",   CFG_BOOL(sectn_mult_once)},
+    {"SECTION_MULT_ONCE",   OPTIONAL_PARAM, cfg_section_mult_once},
     {"ESC_STOPS_TX_ONLY",   CFG_BOOL(stop_tx_only)},
 
     {"F([1-9]|1[0-2])", CFG_MESSAGE(message, -1)},  // index is 1-based
@@ -1475,6 +1518,7 @@ static config_t logcfg_configs[] = {
     {"CABRILLO-(.+)",       OPTIONAL_PARAM, cfg_cabrillo_field},
     {"RESEND_CALL",         NEED_PARAM, cfg_resend_call},
     {"GENERIC_MULT",        NEED_PARAM, cfg_generic_mult},
+    {"WYSIWYG_MULT",        NEED_PARAM, cfg_wysiwyg_mult},
     {"OPERATING_MODE",      NEED_PARAM, cfg_operating_mode},
     {"AUTOSEND",            NEED_PARAM, cfg_autosend},
 

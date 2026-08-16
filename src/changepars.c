@@ -797,8 +797,8 @@ void multiplierinfo(void) {
 	}
     }
 
-    if (serial_section_mult || sectn_mult_once
-	    || (sectn_mult && !CONTEST_IS(ARRL_SS))) {
+    if (serial_section_mult || sectn_mult == MULT_ONCE
+	    || (sectn_mult == MULT_BAND && !CONTEST_IS(ARRL_SS))) {
 	char *tmp;
 	int worked_at;
 
@@ -817,7 +817,7 @@ void multiplierinfo(void) {
 		/* lookup if already worked */
 		for (k = 0; k < nr_multis; k++) {
 		    if (strstr(multis[k].name, get_mult(cnt)) != NULL) {
-			worked_at = multis[k].band;
+			worked_at = multis[k].band[trxmode]; // FIXME: check this
 			break;
 		    }
 		}

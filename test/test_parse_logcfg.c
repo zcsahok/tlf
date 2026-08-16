@@ -446,12 +446,8 @@ static bool_true_t bool_trues[] = {
     {"RADIO_CONTROL", &trx_control},
     {"ROTATOR_CONTROL", &rot_control},
     {"PORTABLE_MULT_2", &portable_x2},
-    {"WYSIWYG_MULTIBAND", &wysiwyg_multi},
-    {"WYSIWYG_ONCE", &wysiwyg_once},
     {"SERIAL+SECTION", &serial_section_mult},
     {"SERIAL_OR_SECTION", &serial_or_section},
-    {"SECTION_MULT", &sectn_mult},
-    {"SECTION_MULT_ONCE", &sectn_mult_once},
     {"SERIAL+GRID4", &serial_grid4_mult},
     {"COUNTRY_MULT", &country_mult},
     {"ITUMULT", &itumult},
@@ -1470,7 +1466,7 @@ void test_tune_seconds(void **state) {
 }
 
 void test_unique_call_multi_none(void **state) {
-    unique_call_multi = MULT_ALL;
+    unique_call_multi = MULT_ONCE;
     int rc = call_parse_logcfg("UNIQUE_CALL_MULTI=NONE");
     assert_int_equal(rc, PARSE_OK);
     assert_int_equal(unique_call_multi, MULT_NONE);
@@ -1479,7 +1475,13 @@ void test_unique_call_multi_none(void **state) {
 void test_unique_call_multi_all(void **state) {
     int rc = call_parse_logcfg("UNIQUE_CALL_MULTI=ALL");
     assert_int_equal(rc, PARSE_OK);
-    assert_int_equal(unique_call_multi, MULT_ALL);
+    assert_int_equal(unique_call_multi, MULT_ONCE); // ALL is an alternative for ONCE
+}
+
+void test_unique_call_multi_once(void **state) {
+    int rc = call_parse_logcfg("UNIQUE_CALL_MULTI=ONCE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(unique_call_multi, MULT_ONCE);
 }
 
 void test_unique_call_multi_band(void **state) {
@@ -1488,8 +1490,14 @@ void test_unique_call_multi_band(void **state) {
     assert_int_equal(unique_call_multi, MULT_BAND);
 }
 
+void test_unique_call_multi_band_mode(void **state) {
+    int rc = call_parse_logcfg("UNIQUE_CALL_MULTI=BAND+MODE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(unique_call_multi, MULT_BAND_MODE);
+}
+
 void test_generic_mult_none(void **state) {
-    generic_mult = MULT_ALL;
+    generic_mult = MULT_ONCE;
     int rc = call_parse_logcfg("GENERIC_MULT=NONE");
     assert_int_equal(rc, PARSE_OK);
     assert_int_equal(generic_mult, MULT_NONE);
@@ -1498,13 +1506,63 @@ void test_generic_mult_none(void **state) {
 void test_generic_mult_all(void **state) {
     int rc = call_parse_logcfg("GENERIC_MULT=ALL");
     assert_int_equal(rc, PARSE_OK);
-    assert_int_equal(generic_mult, MULT_ALL);
+    assert_int_equal(generic_mult, MULT_ONCE);
 }
 
 void test_generic_mult_band(void **state) {
     int rc = call_parse_logcfg("GENERIC_MULT=BAND");
     assert_int_equal(rc, PARSE_OK);
     assert_int_equal(generic_mult, MULT_BAND);
+}
+
+void test_generic_mult_band_mode(void **state) {
+    int rc = call_parse_logcfg("GENERIC_MULT=BAND+MODE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(generic_mult, MULT_BAND_MODE);
+}
+
+void test_wysiwyg_mult_none(void **state) {
+    wysiwyg_mult = MULT_ONCE;
+    int rc = call_parse_logcfg("WYSIWYG_MULT=NONE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(wysiwyg_mult, MULT_NONE);
+}
+
+void test_wysiwyg_mult_all(void **state) {
+    int rc = call_parse_logcfg("WYSIWYG_MULT=ALL");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(wysiwyg_mult, MULT_ONCE);
+}
+
+void test_wysiwyg_multiband(void **state) {
+    int rc = call_parse_logcfg("WYSIWYG_MULTIBAND");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(wysiwyg_mult, MULT_BAND);
+}
+
+void test_wysiwyg_once(void **state) {
+    int rc = call_parse_logcfg("WYSIWYG_ONCE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(wysiwyg_mult, MULT_ONCE);
+}
+
+void test_section_mult_none(void **state) {
+    sectn_mult = MULT_ONCE;
+    int rc = call_parse_logcfg("SECTION_MULT=NONE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(sectn_mult, MULT_NONE);
+}
+
+void test_section_mult_legacy_bool(void **state) {
+    int rc = call_parse_logcfg("SECTION_MULT");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(sectn_mult, MULT_BAND);
+}
+
+void test_section_mult_band_mode(void **state) {
+    int rc = call_parse_logcfg("SECTION_MULT=BAND+MODE");
+    assert_int_equal(rc, PARSE_OK);
+    assert_int_equal(sectn_mult, MULT_BAND_MODE);
 }
 
 void test_digi_rig_mode_usb(void **state) {

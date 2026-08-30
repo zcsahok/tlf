@@ -90,10 +90,7 @@ static void serial_up_down(char *exchange, int delta) {
 int getexchange(void) {
 
     int x = 0;
-    char instring[2];
     char commentbuf[40] = "";
-
-    instring[1] = '\0';
 
     if (lan_active && contest->exchange_serial) {
 	strncpy(lastqsonr, qsonrstr, 5);
@@ -127,6 +124,8 @@ int getexchange(void) {
 
     current_qso.band = bandindex2nr(bandinx); //FIXME drop global bandinx
 
+    int pos = strlen(current_qso.comment);
+
     /* parse input and modify exchange field accordingly */
 
     commentfield = 1;
@@ -158,7 +157,7 @@ int getexchange(void) {
 
 	    /* make sure that the wrefresh() inside getch() shows the cursor
 	     * in the input field */
-	    wmove(stdscr, 12, 54 + strlen(current_qso.comment));
+	    wmove(stdscr, 12, 54 + pos);
 	    x = key_poll();
 	}
 
@@ -191,8 +190,9 @@ int getexchange(void) {
 	    }
 
 	    case KEY_BACKSPACE: {	// Erase (^H or <Backspace>)
-		if (strlen(current_qso.comment) >= 1) {
-		    current_qso.comment[strlen(current_qso.comment) - 1] = '\0';
+		if (pos >= 1) {
+		    --pos;
+		    delete_char(current_qso.comment, pos);
 		}
 		break;
 	    }
@@ -334,16 +334,12 @@ int getexchange(void) {
 	    }
 	}	// End switch
 
-	if (x >= 'a' && x <= 'z')
-	    x = x - 32;		// Promote to upper case
+	x = g_ascii_toupper(x);     // Promote to upper case
 
 	/* normal character -> insert if space left */
 	if (strlen(current_qso.comment) < contest->exchange_width) {
 	    if (x >= ' ' && x <= 'Z') {
-		instring[0] = x;
-		addch(x);
-		strcat(current_qso.comment, instring);
-		refreshp();
+		pos = insert_char(x, current_qso.comment, pos, contest->exchange_width);
 	    }
 	}
 

@@ -62,8 +62,6 @@
 #include "getexchange.h"
 
 
-void exchange_edit(void);
-
 static void serial_up_down(char *exchange, int delta) {
     /* length of serial part in "001" or "001 EU-001" */
     int nr_len = strspn(exchange, "0123456789");
@@ -816,107 +814,4 @@ void checkexchange(struct qso_t *qso, bool interactive) {
 	return;
     }
 
-}
-
-
-/* ------------------------------------------------------------------------ */
-/** Edit exchange field
- */
-
-void exchange_edit(void) {
-
-    int l, b;
-    int i = 0, j;
-    char comment2[27];
-
-    l = strlen(current_qso.comment);
-    b = l - 1;
-    while ((i != ESCAPE) && (b <= strlen(current_qso.comment))) {
-	attroff(A_STANDOUT);
-	attron(COLOR_PAIR(C_HEADER));
-
-	mvaddstr(12, 54, spaces(contest->exchange_width));
-	mvaddstr(12, 54, current_qso.comment);
-	move(12, 54 + b);
-
-	i = key_get();
-
-	// Ctrl-A (^A) or <Home>, move to beginning of comment field.
-	if (i == CTRL_A || i == KEY_HOME) {
-
-	    b = 0;
-
-	    // Ctrl-E (^E) or <End>, move to end of comment field, exit edit mode.
-	} else if (i == CTRL_E || i == KEY_END) {
-
-	    b = strlen(current_qso.comment);
-	    break;
-
-	    // Left arrow, move cursor left one position.
-	} else if (i == KEY_LEFT) {
-
-	    if (b > 0)
-		b--;
-
-	    // Right arrow, move cursor right one position.
-	} else if (i == KEY_RIGHT) {
-
-	    if (b < strlen(current_qso.comment) - 1) {
-		b++;
-	    } else
-		break;		/* stop edit */
-
-	    // <Delete>, erase character under the cursor,
-	    // shift all characters to the right of the cursor left one position.
-	} else if (i == KEY_DC) {
-
-	    l = strlen(current_qso.comment);
-
-	    for (j = b; j <= l; j++) {
-		current_qso.comment[j] = current_qso.comment[j + 1];	/* move to left incl.\0 */
-	    }
-
-	    // <Backspace>, erase character to the left of the cursor,
-	    // shift all characters to the right of the cursor left one position.
-	} else if (i == KEY_BACKSPACE) {
-
-	    if (b > 0) {
-		b--;
-
-		l = strlen(current_qso.comment);
-
-		for (j = b; j <= l; j++) {
-		    current_qso.comment[j] = current_qso.comment[j + 1];
-		}
-	    }
-
-	    // <Escape> not received.
-	} else if (i != ESCAPE) {
-
-	    // Promote lower case to upper case.
-	    if ((i >= 'a') && (i <= 'z'))
-		i = i - 32;
-
-	    // Accept printable characters.
-	    if ((i >= ' ') && (i <= 'Z')) {
-
-		if (strlen(current_qso.comment) < contest->exchange_width) {
-		    /* copy including trailing \0 */
-		    strncpy(comment2, current_qso.comment + b,
-			    strlen(current_qso.comment) - (b - 1));
-
-		    current_qso.comment[b] = i;
-		    current_qso.comment[b + 1] = '\0';
-		    strcat(current_qso.comment, comment2);
-
-		    b++;
-		}
-
-	    } else if (i != 0)
-		i = ESCAPE;
-	}
-    }
-
-    attron(A_STANDOUT);
-    refresh_comment();
 }

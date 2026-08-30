@@ -85,10 +85,25 @@ static void serial_up_down(char *exchange, int delta) {
 }
 
 
+static void align_serial_number() {
+    /* length of serial part in "001" or "001 EU-001" */
+    int nr_len = strspn(current_qso.comment, "0123456789");
+    if (nr_len == 0 || nr_len > 2) {
+	return;     // empty or long enough
+    }
+
+    int pad_length = 3 - nr_len;
+
+    /* prepend zeros */
+    for (int i = 0; i < pad_length; ++i) {
+	insert_char('0', current_qso.comment, 0, contest->exchange_width);
+    }
+}
+
+
 int getexchange(void) {
 
     int x = 0;
-    char commentbuf[40] = "";
 
     if (lan_active && contest->exchange_serial) {
 	strncpy(lastqsonr, qsonrstr, 5);
@@ -350,79 +365,23 @@ int getexchange(void) {
 	if (x == '\n' || x == KEY_ENTER || x == TAB
 		|| x == CTRL_K || x == BACKSLASH) {
 
-	    if ((contest->exchange_serial && current_qso.comment[0] >= '0'
-		    && current_qso.comment[0] <= '9')) {	/* align serial nr. */
-		if (strlen(current_qso.comment) == 1) {
-		    strcpy(commentbuf, current_qso.comment);
-		    current_qso.comment[0] = '\0';
-		    strcat(current_qso.comment, "00");
-		    strcat(current_qso.comment, commentbuf);
-		}
+	    if (contest->exchange_serial && current_qso.comment[0] >= '0'
+		    && current_qso.comment[0] <= '9') {	/* align serial nr. */
 
-		if (strlen(current_qso.comment) == 2) {
-		    strcpy(commentbuf, current_qso.comment);
-		    current_qso.comment[0] = '\0';
-		    strcat(current_qso.comment, "0");
-		    strcat(current_qso.comment, commentbuf);
-		}
+		align_serial_number();
 
 	    }
 
 	    if (CONTEST_IS(WPX)) {	/* align serial nr. */
-
-		if ((strlen(current_qso.comment) == 1) || (current_qso.comment[1] == ' ')) {
-		    strcpy(commentbuf, current_qso.comment);
-		    current_qso.comment[0] = '\0';
-		    strcat(current_qso.comment, "00");
-		    strcat(current_qso.comment, commentbuf);
-		}
-
-		if ((strlen(current_qso.comment) == 2) || (current_qso.comment[2] == ' ')) {
-		    strcpy(commentbuf, current_qso.comment);
-		    current_qso.comment[0] = '\0';
-		    strcat(current_qso.comment, "0");
-		    strcat(current_qso.comment, commentbuf);
-		}
-
+		align_serial_number();
 	    }
 
 	    if (CONTEST_IS(SPRINT)) {
-
-		if ((current_qso.comment[1] == ' ') && (current_qso.comment[0] != ' ')) {
-
-		    strcpy(commentbuf, "00");
-		    commentbuf[2] = current_qso.comment[0];
-		    commentbuf[3] = '\0';
-		    strcat(commentbuf, current_qso.comment + 1);
-		    strcpy(current_qso.comment, commentbuf);
-		}
-		if ((current_qso.comment[2] == ' ') && (current_qso.comment[1] != ' ')) {
-
-		    strcpy(commentbuf, "0");
-		    commentbuf[1] = current_qso.comment[0];
-		    commentbuf[2] = current_qso.comment[1];
-		    commentbuf[3] = '\0';
-		    strcat(commentbuf, current_qso.comment + 2);
-		    strcpy(current_qso.comment, commentbuf);
-		}
-
+		align_serial_number();
 	    }
 
 	    if (CONTEST_IS(PACC_PA) && (countrynr != my.countrynr)) {
-		if (strlen(current_qso.comment) == 1) {
-		    strcpy(commentbuf, current_qso.comment);
-		    current_qso.comment[0] = '\0';
-		    strcat(current_qso.comment, "00");
-		    strcat(current_qso.comment, commentbuf);
-		}
-
-		if (strlen(current_qso.comment) == 2) {
-		    strcpy(commentbuf, current_qso.comment);
-		    current_qso.comment[0] = '\0';
-		    strcat(current_qso.comment, "0");
-		    strcat(current_qso.comment, commentbuf);
-		}
-
+		align_serial_number();
 	    }
 
 	    if (CONTEST_IS(ARRL_SS) && (x != TAB) && (strlen(current_qso.section) < 2)) {

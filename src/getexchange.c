@@ -175,7 +175,7 @@ int getexchange(void) {
 		x = KEY_LEFT;
 		continue;
 	    }
-	    case 19: {	// Ctl+s (^S)--Open QTC panel for sending QTCs
+	    case CTRL_S: {	// Ctl+s (^S)--Open QTC panel for sending QTCs
 		if (qtcdirection == 2 || qtcdirection == 3) {	// in case of QTC=SEND or QTC=BOTH
 		    qtc_main_panel(SEND);
 		}
@@ -289,17 +289,35 @@ int getexchange(void) {
 		break;
 	    }
 
-	    /* <Home>--edit exchange field, position cursor to left end of field.
-	     * Fall through to KEY_LEFT stanza if ungetch() is successful.
-	     */
+	    /* <Home>--move cursor to the beginning of exchange field */
 	    case KEY_HOME: {
-		if (current_qso.comment[0] == '\0' || ungetch(x) != OK)
-		    break;
+		pos = 0;
+		break;
 	    }
 
-	    case KEY_LEFT: {	/* Left Arrow--edit exchange field */
-		if (current_qso.comment[0] != '\0') {
-		    exchange_edit();
+	    /* Ctrl-E (^E) or <End>, move to the end of exchange field */
+	    case CTRL_E:
+	    case KEY_END: {
+		pos = strlen(current_qso.comment);
+		break;
+	    }
+
+	    // <Delete>
+	    case KEY_DC: {
+		delete_char(current_qso.comment, pos);
+		break;
+	    }
+
+	    case KEY_LEFT: {	/* Left Arrow--move cursor left */
+		if (pos > 0) {
+		    --pos;
+		}
+		break;
+	    }
+
+	    case KEY_RIGHT: {	/* Right Arrow--move cursor right */
+		if (pos < strlen(current_qso.comment)) {
+		    ++pos;
 		}
 		break;
 	    }
@@ -334,7 +352,9 @@ int getexchange(void) {
 	    }
 	}	// End switch
 
-	x = g_ascii_toupper(x);     // Promote to upper case
+	if (isascii(x)) {
+	    x = g_ascii_toupper(x);     // Promote to upper case
+	}
 
 	/* normal character -> insert if space left */
 	if (strlen(current_qso.comment) < contest->exchange_width) {

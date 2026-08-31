@@ -232,6 +232,9 @@ int getexchange(void) {
 		} else {
 		    restore_comment();
 		}
+
+		pos = strlen(current_qso.comment);
+
 		break;
 	    }
 

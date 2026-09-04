@@ -174,6 +174,7 @@ int getexchange(void) {
 	    x = key_poll();
 	}
 
+	x = ascii_toupper(x);
 	x = handle_common_key(x);
 
 	switch (x) {
@@ -352,10 +353,6 @@ int getexchange(void) {
 		break;
 	    }
 	}	// End switch
-
-	if (isascii(x)) {
-	    x = g_ascii_toupper(x);     // Promote to upper case
-	}
 
 	/* normal character -> insert if space left */
 	if (strlen(current_qso.comment) < contest->exchange_width) {

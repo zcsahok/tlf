@@ -49,6 +49,7 @@
 #include "deleteqso.h"
 #include "getctydata.h"
 #include "gettxinfo.h"
+#include "get_time.h"
 #include "grabspot.h"
 #include "ignore_unused.h"
 #include "keyer.h"
@@ -170,6 +171,8 @@ int callinput(void) {
 
 	printcall();    // note: calls refreshp()
 
+	long start_period = (minitest ? get_time() / minitest : 0);
+
 	/* wait for next char pressed, but update time, cluster and TRX qrg */
 	/* main loop waiting for input */
 	x = -1;
@@ -238,6 +241,12 @@ int callinput(void) {
 		break;
 	    }
 
+	    if (minitest && start_period != get_time() / minitest) {
+		// exit key input loop at the start of each minitest period
+		// to force refreshing dupe state
+		x = -1;
+		break;
+	    }
 
 	    /* make sure that the wrefresh() inside getch() shows the cursor
 	     * in the input field */

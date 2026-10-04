@@ -124,6 +124,7 @@ int callinput(void) {
     current_qso.dupe = is_dupe(current_qso.call, bandinx, trxmode);
     searchlog();
     if (strlen(current_qso.call) > saved_len) { // check for autofill
+	// potential dupe status change will be handled in the while() loop below
 	pos = strlen(current_qso.call);
 	use_part_pos = pos;
     }
@@ -156,6 +157,13 @@ int callinput(void) {
 	current_qso.dupe = is_dupe(current_qso.call, bandinx, trxmode);
 	searchlog();
 	if (strlen(current_qso.call) > saved_len) { // check for autofill
+	    // call changed: re-evaluate dupe status
+	    bool dupe = is_dupe(current_qso.call, bandinx, trxmode);
+	    if (dupe != current_qso.dupe) {
+		// dupe status changed: re-display search results
+		current_qso.dupe = dupe;
+		searchlog();
+	    }
 	    pos = strlen(current_qso.call);
 	    use_part_pos = pos;
 	}

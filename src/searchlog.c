@@ -441,7 +441,6 @@ static void displaySearchResults(bool dupe) {
 	    // and we are showing the match for the current band:
 	    // --> mark as dupe
 	    wattrset(search_win, COLOR_PAIR(C_DUPE));
-	    dupe = true;
 	    beep();
 	}
 
@@ -658,8 +657,7 @@ void searchlog() {
 	drawSearchWin();
 
 	filterLog(current_qso.call);
-	bool dupe = is_dupe(current_qso.call, bandinx, trxmode);
-	displaySearchResults(dupe);
+	displaySearchResults(current_qso.dupe);
 
 
 	/* prepare and print lower line of checkwindow */
@@ -673,14 +671,14 @@ void searchlog() {
 
 
 	if (partials) {
-	    handlePartials(dupe);
+	    handlePartials(current_qso.dupe);
 	}
 
 	/* show needed sections for ARRL_Sweep Stake*/
-	if (!dupe && CONTEST_IS(ARRL_SS))
+	if (!current_qso.dupe && CONTEST_IS(ARRL_SS))
 	    show_needed_sections();
 
-	if (dupe) {
+	if (current_qso.dupe) {
 	    attrset(COLOR_PAIR(C_DUPE));
 	    mvaddstr(12, 29, current_qso.call);
 	    refreshp();

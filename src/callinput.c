@@ -121,6 +121,7 @@ int callinput(void) {
     attron(modify_attr(COLOR_PAIR(NORMCOLOR)));
 
     saved_len = strlen(current_qso.call);
+    current_qso.dupe = is_dupe(current_qso.call, bandinx, trxmode);
     searchlog();
     if (strlen(current_qso.call) > saved_len) { // check for autofill
 	pos = strlen(current_qso.call);
@@ -152,6 +153,7 @@ int callinput(void) {
 	update_info_line();
 
 	saved_len = strlen(current_qso.call);
+	current_qso.dupe = is_dupe(current_qso.call, bandinx, trxmode);
 	searchlog();
 	if (strlen(current_qso.call) > saved_len) { // check for autofill
 	    pos = strlen(current_qso.call);
@@ -235,6 +237,9 @@ int callinput(void) {
 	    x = key_poll();
 
 	}
+
+	// dupe state may change with time, so let's refresh it
+	current_qso.dupe = is_dupe(current_qso.call, bandinx, trxmode);
 
 	/* special handling of some keycodes if call field is empty */
 	if (*current_qso.call == '\0') {
@@ -441,10 +446,7 @@ int callinput(void) {
 		if (strlen(current_qso.call) < 3 || nob4)
 		    break;
 
-		/* check b4 QSO if call is long enough and 'nob4' off */
-		bool dupe = is_dupe(current_qso.call, bandinx, trxmode);
-
-		if (dupe) {
+		if (current_qso.dupe) {
 		    // send "QSO B4" message (F7)
 		    send_standard_message(6);
 		    cleanup();
